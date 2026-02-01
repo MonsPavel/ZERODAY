@@ -62,12 +62,12 @@ const mood = computed<Mood>(() => {
 
 const moodTone = computed(() => {
   if (mood.value === 'GOOD') {
-    return 'unlocked';
+    return 'good';
   }
   if (mood.value === 'BAD') {
-    return 'locked';
+    return 'bad';
   }
-  return 'default';
+  return 'neutral';
 });
 
 const fallbackMessages: Record<Mood, string[]> = {
@@ -173,7 +173,7 @@ const handleFinish = async () => {
       <UiBadge :tone="moodTone">{{ mood }}</UiBadge>
     </div>
 
-    <UiCard>
+    <UiCard class="punk-card">
       <template #header>Punk bro</template>
       <div class="stack">
         <div class="row">
@@ -320,23 +320,64 @@ const handleFinish = async () => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--c-border);
+  border: 1px solid var(--border);
   border-radius: 999px;
-  color: var(--c-text);
+  color: var(--fg);
   font-weight: 700;
   font-size: 12px;
 }
 
 .mood-icon[data-mood='GOOD']::before {
   content: '✓';
+  color: var(--good);
 }
 
 .mood-icon[data-mood='NEUTRAL']::before {
   content: '—';
+  color: var(--neutral);
 }
 
 .mood-icon[data-mood='BAD']::before {
   content: '!';
+  color: var(--bad);
+}
+
+.punk-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.punk-card::after {
+  content: '';
+  position: absolute;
+  left: -30%;
+  right: -30%;
+  top: 0;
+  height: 1px;
+  background: var(--accent);
+  opacity: 0.35;
+  transform: translateY(-10px);
+  animation: scanline 1.2s ease-out 1;
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateY(-10px);
+    opacity: 0.1;
+  }
+  60% {
+    opacity: 0.35;
+  }
+  100% {
+    transform: translateY(120px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .punk-card::after {
+    animation: none;
+  }
 }
 
 .tips {

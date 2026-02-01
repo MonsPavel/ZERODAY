@@ -12,8 +12,9 @@
 <style scoped>
 .ui-card {
   border-radius: var(--radius-md);
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--fg);
   box-shadow: var(--shadow);
 }
 

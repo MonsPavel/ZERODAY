@@ -17,7 +17,7 @@ const toggleLabel = computed(() => (themeStore.theme === 'mono' ? 'Acid' : 'Mono
       <nav class="nav">
         <RouterLink class="nav-link" to="/today">Today</RouterLink>
         <RouterLink class="nav-link" to="/achievements">Achievements</RouterLink>
-        <UiButton variant="ghost" size="sm" @click="themeStore.toggle()">
+        <UiButton variant="ghost" size="sm" @click="themeStore.toggleTheme()">
           Theme: {{ toggleLabel }}
         </UiButton>
       </nav>
@@ -79,6 +79,6 @@ const toggleLabel = computed(() => (themeStore.theme === 'mono' ? 'Acid' : 'Mono
 
 .content {
   flex: 1;
-  padding: 24px;
+  padding: 20px;
 }
 </style>
