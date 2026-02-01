@@ -1,6 +1,7 @@
 import { createRoute } from '@kitbag/router';
 import TodayPage from '../pages/TodayPage.vue';
 import AchievementsPage from '../pages/AchievementsPage.vue';
+import HistoryPage from '../pages/HistoryPage.vue';
 
 export const todayRoute = createRoute({
   name: 'today',
@@ -14,6 +15,12 @@ export const achievementsRoute = createRoute({
   component: AchievementsPage,
 });
 
+export const historyRoute = createRoute({
+  name: 'history',
+  path: '/history',
+  component: HistoryPage,
+});
+
 export const rootRoute = createRoute({
   name: 'root',
   path: '/',
@@ -23,4 +30,4 @@ rootRoute.onBeforeRouteEnter((_to, { replace }) => {
   replace('today');
 });
 
-export const routes = [rootRoute, todayRoute, achievementsRoute] as const;
+export const routes = [rootRoute, todayRoute, achievementsRoute, historyRoute] as const;
