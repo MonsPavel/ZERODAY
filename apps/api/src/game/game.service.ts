@@ -1,8 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Prisma, TaskStatus } from '@prisma/client';
+import { GoalType, Prisma, TaskStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { getLocalDateString } from '../common/date';
 import { DEMO_USER_ID } from '../common/constants';
+import { GoalsService } from '../goals/goals.service';
 
 type Mood = 'GOOD' | 'NEUTRAL' | 'BAD';
 type TimeOfDay = 'MORNING' | 'DAY' | 'EVENING';
@@ -104,7 +105,10 @@ const isYesterday = (candidate: string, today: string) => {
 
 @Injectable()
 export class GameService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly goalsService: GoalsService,
+  ) {}
 
   private async ensureUser(tx: Prisma.TransactionClient) {
     await tx.user.upsert({
@@ -239,6 +243,10 @@ export class GameService {
     const streak = await tx.streak.findUnique({
       where: { userId: DEMO_USER_ID },
     });
+    const goals = await tx.goal.findMany({
+      where: { userId: DEMO_USER_ID },
+      orderBy: { createdAt: 'asc' },
+    });
 
     const achievements = await tx.userAchievement.findMany({
       where: { userId: DEMO_USER_ID },
@@ -251,6 +259,30 @@ export class GameService {
     const message = pickRandom(messagePool[timeOfDay][mood]);
     const tips = pickTips(mood);
 
+    const today = getLocalDateString();
+    const completedTodayCount = goals.filter((goal) => {
+      if (goal.isActive) {
+        return false;
+      }
+      if (goal.progressInt < goal.targetInt) {
+        return false;
+      }
+      const formatted = new Intl.DateTimeFormat('en-CA', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(goal.updatedAt);
+      return formatted === today;
+    }).length;
+
+    const activeGoals = goals.filter((goal) => goal.isActive);
+    const topGoal =
+      activeGoals.length === 0
+        ? null
+        : activeGoals
+            .slice()
+            .sort((a, b) => b.progressInt / b.targetInt - a.progressInt / a.targetInt)[0];
+
     return {
       date: day.date,
       timeOfDay,
@@ -260,6 +292,18 @@ export class GameService {
       streak: {
         current: streak?.currentInt ?? 0,
         best: streak?.bestInt ?? 0,
+      },
+      goalsSummary: {
+        activeCount: activeGoals.length,
+        completedTodayCount,
+        topGoal: topGoal
+          ? {
+              title: topGoal.title,
+              type: topGoal.type,
+              progressInt: topGoal.progressInt,
+              targetInt: topGoal.targetInt,
+            }
+          : null,
       },
       achievements: achievements.map((item) => ({
         code: item.achievement.code,
@@ -323,6 +367,7 @@ export class GameService {
           },
         });
 
+        await this.goalsService.incrementGoals(GoalType.FINISH_DAYS, tx);
         await this.grantAchievements(tx, nextCurrent);
       }
 

@@ -22,6 +22,30 @@ export class GameStateDto {
     best: number;
   };
 
+  @ApiProperty({
+    type: {
+      properties: {
+        activeCount: { type: 'number' },
+        completedTodayCount: { type: 'number', nullable: true },
+        topGoal: {
+          type: 'object',
+          nullable: true,
+          properties: {
+            title: { type: 'string' },
+            type: { type: 'string' },
+            progressInt: { type: 'number' },
+            targetInt: { type: 'number' },
+          },
+        },
+      },
+    },
+  })
+  goalsSummary!: {
+    activeCount: number;
+    completedTodayCount?: number;
+    topGoal?: { title: string; type: string; progressInt: number; targetInt: number } | null;
+  };
+
   @ApiProperty({ type: () => [AchievementDto] })
   achievements!: AchievementDto[];
 }

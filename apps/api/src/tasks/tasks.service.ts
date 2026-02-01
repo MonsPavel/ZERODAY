@@ -1,17 +1,17 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { GoalType, TaskStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { getLocalDateString } from '../common/date';
 import { DEMO_USER_ID } from '../common/constants';
-import { TaskStatus } from '@prisma/client';
+import { GoalsService } from '../goals/goals.service';
 
 @Injectable()
 export class TasksService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly goalsService: GoalsService,
+  ) {}
 
   private async ensureDemoUser() {
     await this.prisma.user.upsert({
@@ -49,29 +49,37 @@ export class TasksService {
   }
 
   async toggleTask(id: number) {
-    const task = await this.prisma.task.findUnique({
-      where: { id },
-    });
-
-    if (!task) {
-      throw new NotFoundException({
-        code: 'NOT_FOUND',
-        message: 'Task not found.',
+    return this.prisma.$transaction(async (tx) => {
+      const task = await tx.task.findUnique({
+        where: { id },
       });
-    }
 
-    if (task.userId !== DEMO_USER_ID) {
-      throw new ForbiddenException({
-        code: 'NOT_FOUND',
-        message: 'Task not found.',
+      if (!task) {
+        throw new NotFoundException({
+          code: 'NOT_FOUND',
+          message: 'Task not found.',
+        });
+      }
+
+      if (task.userId !== DEMO_USER_ID) {
+        throw new ForbiddenException({
+          code: 'NOT_FOUND',
+          message: 'Task not found.',
+        });
+      }
+
+      const nextStatus = task.status === TaskStatus.TODO ? TaskStatus.DONE : TaskStatus.TODO;
+
+      const updated = await tx.task.update({
+        where: { id: task.id },
+        data: { status: nextStatus },
       });
-    }
 
-    const nextStatus = task.status === TaskStatus.TODO ? TaskStatus.DONE : TaskStatus.TODO;
+      if (task.status === TaskStatus.TODO && nextStatus === TaskStatus.DONE) {
+        await this.goalsService.incrementGoals(GoalType.COUNT_TASKS_DONE, tx);
+      }
 
-    return this.prisma.task.update({
-      where: { id: task.id },
-      data: { status: nextStatus },
+      return updated;
     });
   }
 

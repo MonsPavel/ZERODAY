@@ -3,6 +3,8 @@ import type {
   DayToday,
   FinishDayOk,
   GameState,
+  Goal,
+  GoalType,
   HistoryDayDetail,
   HistoryResponse,
   Task,
@@ -69,3 +71,21 @@ export const getHistory = (days: number) =>
 
 export const getHistoryDay = (date: string) =>
   request<HistoryDayDetail>(`/history/${date}`);
+
+export const getActiveGoals = () => request<Goal[]>('/goals/active');
+
+export const createGoal = (payload: { title: string; type: GoalType; targetInt: number }) =>
+  request<Goal>('/goals', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const toggleGoal = (id: number) =>
+  request<Goal>(`/goals/${id}/toggle`, {
+    method: 'PATCH',
+  });
+
+export const deleteGoal = (id: number) =>
+  request<{ ok: true }>(`/goals/${id}`, {
+    method: 'DELETE',
+  });
