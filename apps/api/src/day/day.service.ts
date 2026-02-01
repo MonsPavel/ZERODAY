@@ -9,7 +9,16 @@ import { getMood, pickMoodMessage } from '../common/mood';
 export class DayService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private async ensureDemoUser() {
+    await this.prisma.user.upsert({
+      where: { id: DEMO_USER_ID },
+      update: {},
+      create: { id: DEMO_USER_ID },
+    });
+  }
+
   async getOrCreateToday() {
+    await this.ensureDemoUser();
     const date = getLocalDateString();
     const day = await this.prisma.day.findFirst({
       where: {
@@ -45,6 +54,7 @@ export class DayService {
   }
 
   async finishToday() {
+    await this.ensureDemoUser();
     const date = getLocalDateString();
     const day = await this.prisma.day.findFirst({
       where: {

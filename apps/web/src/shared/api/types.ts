@@ -1,0 +1,29 @@
+export type TaskStatus = 'TODO' | 'DONE';
+
+export type Task = {
+  id: number;
+  title: string;
+  note?: string | null;
+  status: TaskStatus;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type DayToday = {
+  date: string;
+  completed: boolean;
+  tasks: Task[];
+};
+
+export type FinishDayOk = {
+  ok: boolean;
+  date: string;
+  completed: boolean;
+  mood: 'GOOD' | 'NEUTRAL' | 'BAD';
+  message: string;
+};
+
+export type ApiError = {
+  code: 'NO_TASKS' | 'NOT_ALL_DONE' | 'NOT_FOUND' | 'UNKNOWN';
+  message: string;
+};
