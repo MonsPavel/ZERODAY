@@ -11,6 +11,22 @@
 pnpm install
 ```
 
+## Postgres (Docker)
+
+```bash
+docker compose up -d
+```
+
+## Prisma
+
+Перед запуском API укажи `DATABASE_URL` в `apps/api/.env` (см. `apps/api/.env.example`).
+
+```bash
+pnpm --filter @zeroday/api prisma:generate
+pnpm --filter @zeroday/api db:migrate
+pnpm --filter @zeroday/api db:seed
+```
+
 ## Запуск
 
 ```bash
@@ -33,7 +49,9 @@ curl http://localhost:3000/health
 - `pnpm lint` — линт всего монорепо
 - `pnpm format` — форматирование всего монорепо
 - `pnpm typecheck` — проверка типов для web + shared
+- `pnpm --filter @zeroday/api db:migrate` — миграции Prisma
+- `pnpm --filter @zeroday/api db:seed` — сиды Prisma
 
 ## Переменные окружения
 
-На старте не требуются. При появлении можно добавлять в `.env` на уровне нужного приложения.
+Для API требуется `DATABASE_URL`. Пример есть в `apps/api/.env.example`.
