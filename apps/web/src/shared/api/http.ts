@@ -1,4 +1,4 @@
-import type { ApiError, DayToday, FinishDayOk, Task } from './types';
+import type { ApiError, DayToday, FinishDayOk, GameState, Task } from './types';
 
 const baseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 
@@ -53,3 +53,5 @@ export const finishDay = () =>
   request<FinishDayOk>('/day/finish', {
     method: 'POST',
   });
+
+export const getGameState = () => request<GameState>('/game/state');

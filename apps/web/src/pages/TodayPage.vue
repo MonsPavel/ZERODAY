@@ -1,8 +1,15 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { UiBadge, UiButton, UiCard, UiInput, UiProgress } from '@zeroday/ui';
-import { isApiError, useCreateTaskMutation, useDeleteTaskMutation, useFinishDayMutation, useTodayQuery, useToggleTaskMutation } from '@/features/today/queries';
-import type { Task, TaskStatus } from '@/shared/api/types';
+import {
+  isApiError as isTodayError,
+  useCreateTaskMutation,
+  useDeleteTaskMutation,
+  useTodayQuery,
+  useToggleTaskMutation,
+} from '@/features/today/queries';
+import { isApiError as isGameError, useFinishDayMutation, useGameStateQuery } from '@/features/game/queries';
+import type { AchievementUnlocked, GameState, Mood, Task } from '@/shared/api/types';
 
 const taskTitle = ref('');
 const taskNote = ref('');
@@ -15,10 +22,11 @@ const createTaskMutation = useCreateTaskMutation();
 const toggleTaskMutation = useToggleTaskMutation();
 const deleteTaskMutation = useDeleteTaskMutation();
 const finishDayMutation = useFinishDayMutation();
+const gameQuery = useGameStateQuery();
 
 const tasks = computed(() => todayQuery.data.value?.tasks ?? []);
 const completed = computed(() => todayQuery.data.value?.completed ?? false);
-const dateLabel = computed(() => todayQuery.data.value?.date ?? '—');
+const dateLabel = computed(() => gameQuery.data.value?.date ?? todayQuery.data.value?.date ?? '—');
 
 const sortedTasks = computed(() => {
   const all = tasks.value.slice();
@@ -38,7 +46,10 @@ const progressValue = computed(() => {
   return Math.round((doneCount.value / tasks.value.length) * 100);
 });
 
-const mood = computed(() => {
+const mood = computed<Mood>(() => {
+  if (gameQuery.data.value?.mood) {
+    return gameQuery.data.value.mood;
+  }
   if (completed.value) {
     return 'GOOD';
   }
@@ -58,7 +69,7 @@ const moodTone = computed(() => {
   return 'default';
 });
 
-const fallbackMessages: Record<'GOOD' | 'NEUTRAL' | 'BAD', string[]> = {
+const fallbackMessages: Record<Mood, string[]> = {
   GOOD: ['Сделано. Ровно.', 'Ты закрыл день. Так держать.', 'Финиш есть. Респект.'],
   NEUTRAL: ['Есть прогресс, но не финиш.', 'Нормально, но добей.', 'Движ есть, точка не поставлена.'],
   BAD: ['Ноль задач — ноль выхлопа.', 'Сначала задай цель.', 'Тишина. Завтра без отмазок.'],
@@ -68,8 +79,67 @@ const moodMessage = computed(() => {
   if (finishMessage.value) {
     return finishMessage.value;
   }
+  if (gameQuery.data.value?.message) {
+    return gameQuery.data.value.message;
+  }
   const pool = fallbackMessages[mood.value];
   return pool[Math.floor(Math.random() * pool.length)];
+});
+
+const timeOfDayLabel = computed(() => gameQuery.data.value?.timeOfDay ?? '—');
+const tips = computed(() => gameQuery.data.value?.tips ?? []);
+const streakCurrent = computed(() => gameQuery.data.value?.streak.current ?? 0);
+const streakBest = computed(() => gameQuery.data.value?.streak.best ?? 0);
+const streakProgress = computed(() => Math.min(100, Math.round((streakCurrent.value / 7) * 100)));
+
+const catalog = [
+  {
+    code: 'FIRST_TASK_DONE',
+    title: 'First task done',
+    description: 'Complete your first task.',
+  },
+  {
+    code: 'FIRST_FINISHED_DAY',
+    title: 'First finished day',
+    description: 'Finish all tasks in a day.',
+  },
+  {
+    code: 'NO_ZERO_3',
+    title: 'No zero days',
+    description: 'Complete at least one task for 3 days in a row.',
+  },
+  {
+    code: 'PERFECT_DAY',
+    title: 'Perfect day',
+    description: 'Complete all tasks in a single day.',
+  },
+  {
+    code: 'STREAK_7',
+    title: 'Streak 7',
+    description: 'Reach a 7 day streak.',
+  },
+];
+
+const achievements = computed(() => {
+  const unlocked = gameQuery.data.value?.achievements ?? [];
+  const unlockedMap = new Map(unlocked.map((item) => [item.code, item]));
+  const list = catalog.map((item) => ({
+    ...item,
+    unlocked: unlockedMap.get(item.code),
+  }));
+
+  return list.sort((a, b) => {
+    if (a.unlocked && b.unlocked) {
+      return b.unlocked.unlockedAt.localeCompare(a.unlocked.unlockedAt);
+    }
+    if (a.unlocked) {
+      return -1;
+    }
+    if (b.unlocked) {
+      return 1;
+    }
+    return a.title.localeCompare(b.title);
+  });
 });
 
 const canFinish = computed(
@@ -99,7 +169,7 @@ const handleAdd = async () => {
     taskTitle.value = '';
     taskNote.value = '';
   } catch (error) {
-    if (isApiError(error)) {
+    if (isTodayError(error)) {
       inlineError.value = error.message;
     } else {
       inlineError.value = 'Не удалось создать задачу.';
@@ -112,7 +182,7 @@ const handleToggle = async (task: Task) => {
   try {
     await toggleTaskMutation.mutateAsync(task.id);
   } catch (error) {
-    inlineError.value = isApiError(error) ? error.message : 'Не удалось обновить задачу.';
+    inlineError.value = isTodayError(error) ? error.message : 'Не удалось обновить задачу.';
   }
 };
 
@@ -121,7 +191,7 @@ const handleDelete = async (task: Task) => {
   try {
     await deleteTaskMutation.mutateAsync(task.id);
   } catch (error) {
-    inlineError.value = isApiError(error) ? error.message : 'Не удалось удалить задачу.';
+    inlineError.value = isTodayError(error) ? error.message : 'Не удалось удалить задачу.';
   }
 };
 
@@ -132,7 +202,7 @@ const handleFinish = async () => {
     const result = await finishDayMutation.mutateAsync();
     finishMessage.value = result.message;
   } catch (error) {
-    if (isApiError(error)) {
+    if (isGameError(error)) {
       finishError.value = mapFinishError(error.code);
     } else {
       finishError.value = 'Не удалось закрыть день.';
@@ -154,9 +224,50 @@ const handleFinish = async () => {
     <UiCard>
       <template #header>Punk bro</template>
       <div class="stack">
-        <UiBadge :tone="moodTone">{{ mood }}</UiBadge>
-        <p class="message">{{ moodMessage }}</p>
+        <div class="row">
+          <UiBadge :tone="moodTone">{{ mood }}</UiBadge>
+          <span class="muted">{{ timeOfDayLabel }}</span>
+        </div>
+        <p v-if="gameQuery.isLoading.value" class="muted">...</p>
+        <p v-else class="message">{{ moodMessage }}</p>
+        <div v-if="tips.length" class="tips">
+          <UiBadge v-for="tip in tips" :key="tip" tone="default">{{ tip }}</UiBadge>
+        </div>
         <UiProgress :value="progressValue" label="Progress" />
+      </div>
+    </UiCard>
+
+    <UiCard>
+      <template #header>Streak</template>
+      <div class="stack">
+        <div class="row">
+          <span class="streak-number">{{ streakCurrent }}</span>
+          <span class="muted">best {{ streakBest }}</span>
+        </div>
+        <UiProgress :value="streakProgress" label="To 7 days" />
+      </div>
+    </UiCard>
+
+    <UiCard>
+      <template #header>Achievements</template>
+      <div class="stack">
+        <div v-if="gameQuery.isLoading.value" class="muted">Loading...</div>
+        <div v-else class="achievements">
+          <div
+            v-for="item in achievements"
+            :key="item.code"
+            :class="['achievement', !item.unlocked && 'achievement--locked']"
+          >
+            <div class="row">
+              <UiBadge :tone="item.unlocked ? 'unlocked' : 'locked'">
+                {{ item.unlocked ? 'Unlocked' : 'Locked' }}
+              </UiBadge>
+              <span class="muted">{{ item.code }}</span>
+            </div>
+            <div class="achievement-title">{{ item.title }}</div>
+            <div class="achievement-desc">{{ item.description }}</div>
+          </div>
+        </div>
       </div>
     </UiCard>
 
@@ -256,6 +367,47 @@ const handleFinish = async () => {
 .stack {
   display: grid;
   gap: 12px;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.streak-number {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.achievements {
+  display: grid;
+  gap: 10px;
+}
+
+.achievement {
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  background: var(--c-surface);
+}
+
+.achievement--locked {
+  opacity: 0.6;
+}
+
+.achievement-title {
+  font-weight: 600;
+}
+
+.achievement-desc {
+  font-size: 13px;
+  color: var(--c-muted);
 }
 
 .actions {
