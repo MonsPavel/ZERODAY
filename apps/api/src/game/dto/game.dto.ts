@@ -1,5 +1,30 @@
 import { ApiProperty } from '@nestjs/swagger';
 
+export class TopGoalDto {
+  @ApiProperty()
+  title!: string;
+
+  @ApiProperty()
+  type!: string;
+
+  @ApiProperty()
+  progressInt!: number;
+
+  @ApiProperty()
+  targetInt!: number;
+}
+
+export class GoalsSummaryDto {
+  @ApiProperty()
+  activeCount!: number;
+
+  @ApiProperty({ required: false })
+  completedTodayCount?: number;
+
+  @ApiProperty({ type: () => TopGoalDto, nullable: true, required: false })
+  topGoal?: TopGoalDto | null;
+}
+
 export class GameStateDto {
   @ApiProperty()
   date!: string;
@@ -22,29 +47,8 @@ export class GameStateDto {
     best: number;
   };
 
-  @ApiProperty({
-    type: {
-      properties: {
-        activeCount: { type: 'number' },
-        completedTodayCount: { type: 'number', nullable: true },
-        topGoal: {
-          type: 'object',
-          nullable: true,
-          properties: {
-            title: { type: 'string' },
-            type: { type: 'string' },
-            progressInt: { type: 'number' },
-            targetInt: { type: 'number' },
-          },
-        },
-      },
-    },
-  })
-  goalsSummary!: {
-    activeCount: number;
-    completedTodayCount?: number;
-    topGoal?: { title: string; type: string; progressInt: number; targetInt: number } | null;
-  };
+  @ApiProperty({ type: () => GoalsSummaryDto })
+  goalsSummary!: GoalsSummaryDto;
 
   @ApiProperty({ type: () => [AchievementDto] })
   achievements!: AchievementDto[];
