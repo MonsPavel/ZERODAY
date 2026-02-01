@@ -51,3 +51,21 @@ export type GameState = {
   streak: Streak;
   achievements: AchievementUnlocked[];
 };
+
+export type HistoryDaySummary = {
+  date: string;
+  completed: boolean;
+  doneCount: number;
+  totalCount: number;
+};
+
+export type HistoryResponse = {
+  days: HistoryDaySummary[];
+  streak: Streak;
+};
+
+export type HistoryDayDetail = {
+  date: string;
+  completed: boolean;
+  tasks: Task[];
+};

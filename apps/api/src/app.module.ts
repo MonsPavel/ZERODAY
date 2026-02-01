@@ -6,10 +6,12 @@ import { TasksController } from './tasks/tasks.controller';
 import { TasksService } from './tasks/tasks.service';
 import { GameService } from './game/game.service';
 import { GameController } from './game/game.controller';
+import { HistoryController } from './history/history.controller';
+import { HistoryService } from './history/history.service';
 
 @Module({
   imports: [PrismaModule],
-  controllers: [AppController, DayController, TasksController, GameController],
-  providers: [TasksService, GameService],
+  controllers: [AppController, DayController, TasksController, GameController, HistoryController],
+  providers: [TasksService, GameService, HistoryService],
 })
 export class AppModule {}

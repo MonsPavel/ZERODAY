@@ -1,4 +1,12 @@
-import type { ApiError, DayToday, FinishDayOk, GameState, Task } from './types';
+import type {
+  ApiError,
+  DayToday,
+  FinishDayOk,
+  GameState,
+  HistoryDayDetail,
+  HistoryResponse,
+  Task,
+} from './types';
 
 const baseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 
@@ -55,3 +63,9 @@ export const finishDay = () =>
   });
 
 export const getGameState = () => request<GameState>('/game/state');
+
+export const getHistory = (days: number) =>
+  request<HistoryResponse>(`/history?days=${days}`);
+
+export const getHistoryDay = (date: string) =>
+  request<HistoryDayDetail>(`/history/${date}`);
