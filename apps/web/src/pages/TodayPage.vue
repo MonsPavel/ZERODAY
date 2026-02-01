@@ -9,7 +9,8 @@ import {
   useToggleTaskMutation,
 } from '@/features/today/queries';
 import { isApiError as isGameError, useFinishDayMutation, useGameStateQuery } from '@/features/game/queries';
-import type { AchievementUnlocked, GameState, Mood, Task } from '@/shared/api/types';
+import AchievementsGrid from '@/features/game/AchievementsGrid.vue';
+import type { Mood, Task } from '@/shared/api/types';
 
 const taskTitle = ref('');
 const taskNote = ref('');
@@ -92,55 +93,6 @@ const streakCurrent = computed(() => gameQuery.data.value?.streak.current ?? 0);
 const streakBest = computed(() => gameQuery.data.value?.streak.best ?? 0);
 const streakProgress = computed(() => Math.min(100, Math.round((streakCurrent.value / 7) * 100)));
 
-const catalog = [
-  {
-    code: 'FIRST_TASK_DONE',
-    title: 'First task done',
-    description: 'Complete your first task.',
-  },
-  {
-    code: 'FIRST_FINISHED_DAY',
-    title: 'First finished day',
-    description: 'Finish all tasks in a day.',
-  },
-  {
-    code: 'NO_ZERO_3',
-    title: 'No zero days',
-    description: 'Complete at least one task for 3 days in a row.',
-  },
-  {
-    code: 'PERFECT_DAY',
-    title: 'Perfect day',
-    description: 'Complete all tasks in a single day.',
-  },
-  {
-    code: 'STREAK_7',
-    title: 'Streak 7',
-    description: 'Reach a 7 day streak.',
-  },
-];
-
-const achievements = computed(() => {
-  const unlocked = gameQuery.data.value?.achievements ?? [];
-  const unlockedMap = new Map(unlocked.map((item) => [item.code, item]));
-  const list = catalog.map((item) => ({
-    ...item,
-    unlocked: unlockedMap.get(item.code),
-  }));
-
-  return list.sort((a, b) => {
-    if (a.unlocked && b.unlocked) {
-      return b.unlocked.unlockedAt.localeCompare(a.unlocked.unlockedAt);
-    }
-    if (a.unlocked) {
-      return -1;
-    }
-    if (b.unlocked) {
-      return 1;
-    }
-    return a.title.localeCompare(b.title);
-  });
-});
 
 const canFinish = computed(
   () => tasks.value.length > 0 && doneCount.value === tasks.value.length,
@@ -225,6 +177,7 @@ const handleFinish = async () => {
       <template #header>Punk bro</template>
       <div class="stack">
         <div class="row">
+          <span class="mood-icon" :data-mood="mood" aria-hidden="true" />
           <UiBadge :tone="moodTone">{{ mood }}</UiBadge>
           <span class="muted">{{ timeOfDayLabel }}</span>
         </div>
@@ -252,21 +205,8 @@ const handleFinish = async () => {
       <template #header>Achievements</template>
       <div class="stack">
         <div v-if="gameQuery.isLoading.value" class="muted">Loading...</div>
-        <div v-else class="achievements">
-          <div
-            v-for="item in achievements"
-            :key="item.code"
-            :class="['achievement', !item.unlocked && 'achievement--locked']"
-          >
-            <div class="row">
-              <UiBadge :tone="item.unlocked ? 'unlocked' : 'locked'">
-                {{ item.unlocked ? 'Unlocked' : 'Locked' }}
-              </UiBadge>
-              <span class="muted">{{ item.code }}</span>
-            </div>
-            <div class="achievement-title">{{ item.title }}</div>
-            <div class="achievement-desc">{{ item.description }}</div>
-          </div>
+        <div v-else>
+          <AchievementsGrid :achievements="gameQuery.data.value?.achievements ?? []" />
         </div>
       </div>
     </UiCard>
@@ -374,6 +314,31 @@ const handleFinish = async () => {
   gap: 10px;
 }
 
+.mood-icon {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--c-border);
+  border-radius: 999px;
+  color: var(--c-text);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.mood-icon[data-mood='GOOD']::before {
+  content: '✓';
+}
+
+.mood-icon[data-mood='NEUTRAL']::before {
+  content: '—';
+}
+
+.mood-icon[data-mood='BAD']::before {
+  content: '!';
+}
+
 .tips {
   display: flex;
   gap: 8px;
@@ -385,30 +350,6 @@ const handleFinish = async () => {
   font-weight: 700;
 }
 
-.achievements {
-  display: grid;
-  gap: 10px;
-}
-
-.achievement {
-  border: 1px solid var(--c-border);
-  border-radius: var(--radius-sm);
-  padding: 12px;
-  background: var(--c-surface);
-}
-
-.achievement--locked {
-  opacity: 0.6;
-}
-
-.achievement-title {
-  font-weight: 600;
-}
-
-.achievement-desc {
-  font-size: 13px;
-  color: var(--c-muted);
-}
 
 .actions {
   display: flex;
