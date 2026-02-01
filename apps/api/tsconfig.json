@@ -13,5 +13,6 @@
     "sourceMap": true,
     "types": ["node"]
   },
-  "include": ["src", "prisma"]
+  "include": ["src"],
+  "exclude": ["prisma"]
 }

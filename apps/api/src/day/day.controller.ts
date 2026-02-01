@@ -26,8 +26,14 @@ export class DayController {
     description: 'Validation of day completion',
     type: ErrorResponseDto,
     examples: {
-      noTasks: { value: { code: 'NO_TASKS', message: 'Нет задач на сегодня.' } },
-      notAllDone: { value: { code: 'NOT_ALL_DONE', message: 'Не все задачи выполнены.' } },
+      noTasks: {
+        summary: 'No tasks for today',
+        value: { code: 'NO_TASKS', message: 'Нет задач на сегодня.' },
+      },
+      notAllDone: {
+        summary: 'Not all tasks completed',
+        value: { code: 'NOT_ALL_DONE', message: 'Не все задачи выполнены.' },
+      },
     },
   })
   async finishDay() {
