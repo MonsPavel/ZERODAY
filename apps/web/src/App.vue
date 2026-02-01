@@ -1,10 +1,25 @@
+<script setup lang="ts">
+import { computed } from 'vue';
+import { UiButton } from '@zeroday/ui';
+import { useThemeStore } from './stores/theme';
+
+const themeStore = useThemeStore();
+const toggleLabel = computed(() => (themeStore.theme === 'mono' ? 'Acid' : 'Mono'));
+</script>
+
 <template>
   <div class="layout">
     <header class="header">
-      <h1 class="title">Zeroday</h1>
+      <div class="brand">
+        <h1 class="title">Zeroday</h1>
+        <span class="subtitle">UI Kit</span>
+      </div>
       <nav class="nav">
         <RouterLink class="nav-link" to="/today">Today</RouterLink>
         <RouterLink class="nav-link" to="/achievements">Achievements</RouterLink>
+        <UiButton variant="ghost" size="sm" @click="themeStore.toggle()">
+          Theme: {{ toggleLabel }}
+        </UiButton>
       </nav>
     </header>
     <main class="content">
@@ -18,7 +33,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  font-family: "Inter", system-ui, sans-serif;
+  font-family: var(--font-sans);
 }
 
 .header {
@@ -26,8 +41,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 16px 24px;
-  border-bottom: 1px solid #e6e6e6;
-  background: #fff;
+  border-bottom: 1px solid var(--c-border);
+  background: var(--c-surface);
+  gap: 24px;
 }
 
 .title {
@@ -35,14 +51,25 @@
   font-size: 20px;
 }
 
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.subtitle {
+  font-size: 12px;
+  color: var(--c-muted);
+}
+
 .nav {
   display: flex;
   gap: 16px;
+  align-items: center;
 }
 
 .nav-link {
-  color: #2a5bd7;
-  text-decoration: none;
+  color: var(--c-text);
   font-weight: 600;
 }
 
