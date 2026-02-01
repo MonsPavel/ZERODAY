@@ -10,6 +10,7 @@ import {
 } from '@/features/today/queries';
 import { isApiError as isGameError, useFinishDayMutation, useGameStateQuery } from '@/features/game/queries';
 import AchievementsGrid from '@/features/game/AchievementsGrid.vue';
+import { GOAL_TYPE_MAP } from '@/features/goals/goalType.map';
 import type { Mood, Task } from '@/shared/api/types';
 
 const taskTitle = ref('');
@@ -92,6 +93,9 @@ const tips = computed(() => gameQuery.data.value?.tips ?? []);
 const streakCurrent = computed(() => gameQuery.data.value?.streak.current ?? 0);
 const streakBest = computed(() => gameQuery.data.value?.streak.best ?? 0);
 const streakProgress = computed(() => Math.min(100, Math.round((streakCurrent.value / 7) * 100)));
+const goalsSummary = computed(() => gameQuery.data.value?.goalsSummary);
+const topGoal = computed(() => goalsSummary.value?.topGoal ?? null);
+const goalsCompletedToday = computed(() => goalsSummary.value?.completedTodayCount ?? 0);
 
 
 const canFinish = computed(
@@ -198,6 +202,32 @@ const handleFinish = async () => {
           <span class="muted">best {{ streakBest }}</span>
         </div>
         <UiProgress :value="streakProgress" label="To 7 days" />
+      </div>
+    </UiCard>
+
+    <UiCard>
+      <template #header>Goals</template>
+      <div class="stack">
+        <div v-if="gameQuery.isLoading.value" class="muted">Loading...</div>
+        <div v-else-if="!topGoal" class="muted">Целей нет — выбери, куда бить.</div>
+        <div v-else class="stack">
+          <div class="row">
+            <div>
+              <div class="goal-title">{{ topGoal.title }}</div>
+              <div class="muted">
+                {{ topGoal.progressInt }} / {{ topGoal.targetInt }}
+                {{ GOAL_TYPE_MAP[topGoal.type].progressUnit }}
+              </div>
+            </div>
+            <UiBadge tone="default">Top goal</UiBadge>
+          </div>
+          <UiProgress
+            :value="Math.min(100, Math.round((topGoal.progressInt / topGoal.targetInt) * 100))"
+          />
+        </div>
+        <p v-if="goalsCompletedToday > 0" class="message">
+          Цель закрыта. Панк-бро одобряет.
+        </p>
       </div>
     </UiCard>
 
@@ -423,6 +453,10 @@ const handleFinish = async () => {
 }
 
 .task-title {
+  font-weight: 600;
+}
+
+.goal-title {
   font-weight: 600;
 }
 

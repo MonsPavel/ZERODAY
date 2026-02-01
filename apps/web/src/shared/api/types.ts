@@ -17,12 +17,8 @@ export type DayToday = {
   tasks: Task[];
 };
 
-export type FinishDayOk = {
+export type FinishDayOk = GameState & {
   ok: boolean;
-  date: string;
-  completed: boolean;
-  mood: Mood;
-  message: string;
 };
 
 export type ApiError = {
@@ -49,6 +45,7 @@ export type GameState = {
   message: string;
   tips: string[];
   streak: Streak;
+  goalsSummary: GoalsSummary;
   achievements: AchievementUnlocked[];
 };
 
@@ -68,4 +65,24 @@ export type HistoryDayDetail = {
   date: string;
   completed: boolean;
   tasks: Task[];
+};
+
+export type GoalType = 'COUNT_TASKS_DONE' | 'FINISH_DAYS';
+
+export type Goal = {
+  id: number;
+  userId: number;
+  title: string;
+  type: GoalType;
+  targetInt: number;
+  progressInt: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GoalsSummary = {
+  activeCount: number;
+  completedTodayCount?: number;
+  topGoal?: { title: string; type: GoalType; progressInt: number; targetInt: number } | null;
 };
