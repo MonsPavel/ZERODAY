@@ -1,0 +1,76 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TaskStatus {
+  TODO
+  DONE
+}
+
+model User {
+  id               Int              @id @default(autoincrement())
+  createdAt        DateTime         @default(now())
+  days             Day[]
+  tasks            Task[]
+  streak           Streak?
+  achievements     UserAchievement[]
+}
+
+model Day {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  date      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+  tasks     Task[]
+
+  @@unique([userId, date])
+}
+
+model Task {
+  id        Int        @id @default(autoincrement())
+  userId    Int
+  dayId     Int
+  title     String
+  note      String?
+  status    TaskStatus @default(TODO)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  user      User       @relation(fields: [userId], references: [id])
+  day       Day        @relation(fields: [dayId], references: [id])
+}
+
+model Achievement {
+  id          Int               @id @default(autoincrement())
+  code        String            @unique
+  title       String
+  description String
+  createdAt   DateTime          @default(now())
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  id            Int         @id @default(autoincrement())
+  userId        Int
+  achievementId Int
+  unlockedAt    DateTime    @default(now())
+  user          User        @relation(fields: [userId], references: [id])
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+
+  @@unique([userId, achievementId])
+}
+
+model Streak {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @unique
+  currentInt Int
+  bestInt    Int
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id])
+}

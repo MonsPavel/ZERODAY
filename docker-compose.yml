@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: zeroday-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: zeroday
+      POSTGRES_PASSWORD: zeroday
+      POSTGRES_DB: zeroday
+    ports:
+      - "5432:5432"
+    volumes:
+      - zeroday_pg:/var/lib/postgresql/data
+
+volumes:
+  zeroday_pg:
