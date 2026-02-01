@@ -32,16 +32,20 @@ const onInput = (event: Event) => {
   width: 100%;
   padding: 10px 12px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--c-border);
-  background: var(--c-surface);
-  color: var(--c-text);
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--fg);
 }
 
 .ui-input::placeholder {
-  color: var(--c-muted);
+  color: var(--muted);
 }
 
 .ui-input:disabled {
   opacity: 0.6;
+}
+
+.ui-input:focus-visible {
+  border-color: var(--accent);
 }
 </style>

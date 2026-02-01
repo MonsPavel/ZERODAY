@@ -23,7 +23,7 @@ export const useThemeStore = defineStore('theme', () => {
     apply();
   };
 
-  const toggle = () => {
+  const toggleTheme = () => {
     theme.value = theme.value === 'mono' ? 'acid' : 'mono';
     apply();
   };
@@ -31,7 +31,7 @@ export const useThemeStore = defineStore('theme', () => {
   return {
     theme,
     init,
-    toggle,
+    toggleTheme,
     apply,
   };
 });

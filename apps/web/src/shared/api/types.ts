@@ -1,4 +1,6 @@
 export type TaskStatus = 'TODO' | 'DONE';
+export type TimeOfDay = 'MORNING' | 'DAY' | 'EVENING';
+export type Mood = 'GOOD' | 'NEUTRAL' | 'BAD';
 
 export type Task = {
   id: number;
@@ -19,11 +21,33 @@ export type FinishDayOk = {
   ok: boolean;
   date: string;
   completed: boolean;
-  mood: 'GOOD' | 'NEUTRAL' | 'BAD';
+  mood: Mood;
   message: string;
 };
 
 export type ApiError = {
   code: 'NO_TASKS' | 'NOT_ALL_DONE' | 'NOT_FOUND' | 'UNKNOWN';
   message: string;
+};
+
+export type Streak = {
+  current: number;
+  best: number;
+};
+
+export type AchievementUnlocked = {
+  code: string;
+  title: string;
+  description: string;
+  unlockedAt: string;
+};
+
+export type GameState = {
+  date: string;
+  timeOfDay: TimeOfDay;
+  mood: Mood;
+  message: string;
+  tips: string[];
+  streak: Streak;
+  achievements: AchievementUnlocked[];
 };

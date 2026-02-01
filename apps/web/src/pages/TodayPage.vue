@@ -1,8 +1,16 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { UiBadge, UiButton, UiCard, UiInput, UiProgress } from '@zeroday/ui';
-import { isApiError, useCreateTaskMutation, useDeleteTaskMutation, useFinishDayMutation, useTodayQuery, useToggleTaskMutation } from '@/features/today/queries';
-import type { Task, TaskStatus } from '@/shared/api/types';
+import {
+  isApiError as isTodayError,
+  useCreateTaskMutation,
+  useDeleteTaskMutation,
+  useTodayQuery,
+  useToggleTaskMutation,
+} from '@/features/today/queries';
+import { isApiError as isGameError, useFinishDayMutation, useGameStateQuery } from '@/features/game/queries';
+import AchievementsGrid from '@/features/game/AchievementsGrid.vue';
+import type { Mood, Task } from '@/shared/api/types';
 
 const taskTitle = ref('');
 const taskNote = ref('');
@@ -15,10 +23,11 @@ const createTaskMutation = useCreateTaskMutation();
 const toggleTaskMutation = useToggleTaskMutation();
 const deleteTaskMutation = useDeleteTaskMutation();
 const finishDayMutation = useFinishDayMutation();
+const gameQuery = useGameStateQuery();
 
 const tasks = computed(() => todayQuery.data.value?.tasks ?? []);
 const completed = computed(() => todayQuery.data.value?.completed ?? false);
-const dateLabel = computed(() => todayQuery.data.value?.date ?? '—');
+const dateLabel = computed(() => gameQuery.data.value?.date ?? todayQuery.data.value?.date ?? '—');
 
 const sortedTasks = computed(() => {
   const all = tasks.value.slice();
@@ -38,7 +47,10 @@ const progressValue = computed(() => {
   return Math.round((doneCount.value / tasks.value.length) * 100);
 });
 
-const mood = computed(() => {
+const mood = computed<Mood>(() => {
+  if (gameQuery.data.value?.mood) {
+    return gameQuery.data.value.mood;
+  }
   if (completed.value) {
     return 'GOOD';
   }
@@ -50,15 +62,15 @@ const mood = computed(() => {
 
 const moodTone = computed(() => {
   if (mood.value === 'GOOD') {
-    return 'unlocked';
+    return 'good';
   }
   if (mood.value === 'BAD') {
-    return 'locked';
+    return 'bad';
   }
-  return 'default';
+  return 'neutral';
 });
 
-const fallbackMessages: Record<'GOOD' | 'NEUTRAL' | 'BAD', string[]> = {
+const fallbackMessages: Record<Mood, string[]> = {
   GOOD: ['Сделано. Ровно.', 'Ты закрыл день. Так держать.', 'Финиш есть. Респект.'],
   NEUTRAL: ['Есть прогресс, но не финиш.', 'Нормально, но добей.', 'Движ есть, точка не поставлена.'],
   BAD: ['Ноль задач — ноль выхлопа.', 'Сначала задай цель.', 'Тишина. Завтра без отмазок.'],
@@ -68,9 +80,19 @@ const moodMessage = computed(() => {
   if (finishMessage.value) {
     return finishMessage.value;
   }
+  if (gameQuery.data.value?.message) {
+    return gameQuery.data.value.message;
+  }
   const pool = fallbackMessages[mood.value];
   return pool[Math.floor(Math.random() * pool.length)];
 });
+
+const timeOfDayLabel = computed(() => gameQuery.data.value?.timeOfDay ?? '—');
+const tips = computed(() => gameQuery.data.value?.tips ?? []);
+const streakCurrent = computed(() => gameQuery.data.value?.streak.current ?? 0);
+const streakBest = computed(() => gameQuery.data.value?.streak.best ?? 0);
+const streakProgress = computed(() => Math.min(100, Math.round((streakCurrent.value / 7) * 100)));
+
 
 const canFinish = computed(
   () => tasks.value.length > 0 && doneCount.value === tasks.value.length,
@@ -99,7 +121,7 @@ const handleAdd = async () => {
     taskTitle.value = '';
     taskNote.value = '';
   } catch (error) {
-    if (isApiError(error)) {
+    if (isTodayError(error)) {
       inlineError.value = error.message;
     } else {
       inlineError.value = 'Не удалось создать задачу.';
@@ -112,7 +134,7 @@ const handleToggle = async (task: Task) => {
   try {
     await toggleTaskMutation.mutateAsync(task.id);
   } catch (error) {
-    inlineError.value = isApiError(error) ? error.message : 'Не удалось обновить задачу.';
+    inlineError.value = isTodayError(error) ? error.message : 'Не удалось обновить задачу.';
   }
 };
 
@@ -121,7 +143,7 @@ const handleDelete = async (task: Task) => {
   try {
     await deleteTaskMutation.mutateAsync(task.id);
   } catch (error) {
-    inlineError.value = isApiError(error) ? error.message : 'Не удалось удалить задачу.';
+    inlineError.value = isTodayError(error) ? error.message : 'Не удалось удалить задачу.';
   }
 };
 
@@ -132,7 +154,7 @@ const handleFinish = async () => {
     const result = await finishDayMutation.mutateAsync();
     finishMessage.value = result.message;
   } catch (error) {
-    if (isApiError(error)) {
+    if (isGameError(error)) {
       finishError.value = mapFinishError(error.code);
     } else {
       finishError.value = 'Не удалось закрыть день.';
@@ -151,12 +173,41 @@ const handleFinish = async () => {
       <UiBadge :tone="moodTone">{{ mood }}</UiBadge>
     </div>
 
-    <UiCard>
+    <UiCard class="punk-card">
       <template #header>Punk bro</template>
       <div class="stack">
-        <UiBadge :tone="moodTone">{{ mood }}</UiBadge>
-        <p class="message">{{ moodMessage }}</p>
+        <div class="row">
+          <span class="mood-icon" :data-mood="mood" aria-hidden="true" />
+          <UiBadge :tone="moodTone">{{ mood }}</UiBadge>
+          <span class="muted">{{ timeOfDayLabel }}</span>
+        </div>
+        <p v-if="gameQuery.isLoading.value" class="muted">...</p>
+        <p v-else class="message">{{ moodMessage }}</p>
+        <div v-if="tips.length" class="tips">
+          <UiBadge v-for="tip in tips" :key="tip" tone="default">{{ tip }}</UiBadge>
+        </div>
         <UiProgress :value="progressValue" label="Progress" />
+      </div>
+    </UiCard>
+
+    <UiCard>
+      <template #header>Streak</template>
+      <div class="stack">
+        <div class="row">
+          <span class="streak-number">{{ streakCurrent }}</span>
+          <span class="muted">best {{ streakBest }}</span>
+        </div>
+        <UiProgress :value="streakProgress" label="To 7 days" />
+      </div>
+    </UiCard>
+
+    <UiCard>
+      <template #header>Achievements</template>
+      <div class="stack">
+        <div v-if="gameQuery.isLoading.value" class="muted">Loading...</div>
+        <div v-else>
+          <AchievementsGrid :achievements="gameQuery.data.value?.achievements ?? []" />
+        </div>
       </div>
     </UiCard>
 
@@ -257,6 +308,89 @@ const handleFinish = async () => {
   display: grid;
   gap: 12px;
 }
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.mood-icon {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--fg);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.mood-icon[data-mood='GOOD']::before {
+  content: '✓';
+  color: var(--good);
+}
+
+.mood-icon[data-mood='NEUTRAL']::before {
+  content: '—';
+  color: var(--neutral);
+}
+
+.mood-icon[data-mood='BAD']::before {
+  content: '!';
+  color: var(--bad);
+}
+
+.punk-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.punk-card::after {
+  content: '';
+  position: absolute;
+  left: -30%;
+  right: -30%;
+  top: 0;
+  height: 1px;
+  background: var(--accent);
+  opacity: 0.35;
+  transform: translateY(-10px);
+  animation: scanline 1.2s ease-out 1;
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateY(-10px);
+    opacity: 0.1;
+  }
+  60% {
+    opacity: 0.35;
+  }
+  100% {
+    transform: translateY(120px);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .punk-card::after {
+    animation: none;
+  }
+}
+
+.tips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.streak-number {
+  font-size: 28px;
+  font-weight: 700;
+}
+
 
 .actions {
   display: flex;

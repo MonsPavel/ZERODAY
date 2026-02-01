@@ -1,5 +1,5 @@
 <script setup lang="ts">
-type BadgeTone = 'default' | 'locked' | 'unlocked';
+type BadgeTone = 'default' | 'good' | 'neutral' | 'bad' | 'locked' | 'unlocked';
 
 const props = withDefaults(
   defineProps<{
@@ -31,12 +31,27 @@ const props = withDefaults(
 }
 
 .ui-badge--locked {
-  background: var(--c-accent-weak);
-  color: var(--c-text);
+  background: var(--c-surface);
+  color: var(--c-muted);
+}
+
+.ui-badge--good {
+  background: var(--good);
+  color: var(--accent-contrast);
+}
+
+.ui-badge--neutral {
+  background: var(--neutral);
+  color: var(--accent-contrast);
+}
+
+.ui-badge--bad {
+  background: var(--bad);
+  color: var(--accent-contrast);
 }
 
 .ui-badge--unlocked {
-  background: var(--c-accent);
-  color: var(--c-bg);
+  background: var(--accent);
+  color: var(--accent-contrast);
 }
 </style>

@@ -31,9 +31,9 @@ const props = withDefaults(
 
 <style scoped>
 .ui-button {
-  border: 1px solid var(--c-border);
-  background: var(--c-accent);
-  color: var(--c-bg);
+  border: 1px solid var(--border);
+  background: var(--accent);
+  color: var(--accent-contrast);
   border-radius: var(--radius-sm);
   padding: 10px 16px;
   font-weight: 600;
@@ -53,12 +53,12 @@ const props = withDefaults(
 
 .ui-button--ghost {
   background: transparent;
-  color: var(--c-text);
+  color: var(--fg);
 }
 
 .ui-button--danger {
-  background: var(--c-accent-weak);
-  color: var(--c-text);
+  background: var(--border);
+  color: var(--fg);
 }
 
 .ui-button:disabled {
