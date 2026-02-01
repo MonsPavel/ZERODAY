@@ -1,23 +1,240 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { UiButton, UiCard, UiInput, UiProgress, UiBadge } from '@zeroday/ui';
+import { computed, ref } from 'vue';
+import { UiBadge, UiButton, UiCard, UiInput, UiProgress } from '@zeroday/ui';
+import { isApiError, useCreateTaskMutation, useDeleteTaskMutation, useFinishDayMutation, useTodayQuery, useToggleTaskMutation } from '@/features/today/queries';
+import type { Task, TaskStatus } from '@/shared/api/types';
 
-const note = ref('');
+const taskTitle = ref('');
+const taskNote = ref('');
+const finishMessage = ref<string | null>(null);
+const finishError = ref<string | null>(null);
+const inlineError = ref<string | null>(null);
+
+const todayQuery = useTodayQuery();
+const createTaskMutation = useCreateTaskMutation();
+const toggleTaskMutation = useToggleTaskMutation();
+const deleteTaskMutation = useDeleteTaskMutation();
+const finishDayMutation = useFinishDayMutation();
+
+const tasks = computed(() => todayQuery.data.value?.tasks ?? []);
+const completed = computed(() => todayQuery.data.value?.completed ?? false);
+const dateLabel = computed(() => todayQuery.data.value?.date ?? '—');
+
+const sortedTasks = computed(() => {
+  const all = tasks.value.slice();
+  return all.sort((a, b) => {
+    if (a.status === b.status) {
+      return a.id - b.id;
+    }
+    return a.status === 'TODO' ? -1 : 1;
+  });
+});
+
+const doneCount = computed(() => tasks.value.filter((task) => task.status === 'DONE').length);
+const progressValue = computed(() => {
+  if (tasks.value.length === 0) {
+    return 0;
+  }
+  return Math.round((doneCount.value / tasks.value.length) * 100);
+});
+
+const mood = computed(() => {
+  if (completed.value) {
+    return 'GOOD';
+  }
+  if (tasks.value.length === 0 || doneCount.value === 0) {
+    return 'BAD';
+  }
+  return 'NEUTRAL';
+});
+
+const moodTone = computed(() => {
+  if (mood.value === 'GOOD') {
+    return 'unlocked';
+  }
+  if (mood.value === 'BAD') {
+    return 'locked';
+  }
+  return 'default';
+});
+
+const fallbackMessages: Record<'GOOD' | 'NEUTRAL' | 'BAD', string[]> = {
+  GOOD: ['Сделано. Ровно.', 'Ты закрыл день. Так держать.', 'Финиш есть. Респект.'],
+  NEUTRAL: ['Есть прогресс, но не финиш.', 'Нормально, но добей.', 'Движ есть, точка не поставлена.'],
+  BAD: ['Ноль задач — ноль выхлопа.', 'Сначала задай цель.', 'Тишина. Завтра без отмазок.'],
+};
+
+const moodMessage = computed(() => {
+  if (finishMessage.value) {
+    return finishMessage.value;
+  }
+  const pool = fallbackMessages[mood.value];
+  return pool[Math.floor(Math.random() * pool.length)];
+});
+
+const canFinish = computed(
+  () => tasks.value.length > 0 && doneCount.value === tasks.value.length,
+);
+
+const mapFinishError = (code?: string) => {
+  if (code === 'NO_TASKS') {
+    return 'Ноль задач. Сначала задай хоть одну.';
+  }
+  if (code === 'NOT_ALL_DONE') {
+    return 'Сначала добей хвосты. Потом закрываем день.';
+  }
+  return 'Что-то пошло не так. Попробуй ещё раз.';
+};
+
+const handleAdd = async () => {
+  inlineError.value = null;
+  const title = taskTitle.value.trim();
+  const note = taskNote.value.trim();
+  if (!title) {
+    inlineError.value = 'Название задачи не может быть пустым.';
+    return;
+  }
+  try {
+    await createTaskMutation.mutateAsync({ title, note: note || undefined });
+    taskTitle.value = '';
+    taskNote.value = '';
+  } catch (error) {
+    if (isApiError(error)) {
+      inlineError.value = error.message;
+    } else {
+      inlineError.value = 'Не удалось создать задачу.';
+    }
+  }
+};
+
+const handleToggle = async (task: Task) => {
+  inlineError.value = null;
+  try {
+    await toggleTaskMutation.mutateAsync(task.id);
+  } catch (error) {
+    inlineError.value = isApiError(error) ? error.message : 'Не удалось обновить задачу.';
+  }
+};
+
+const handleDelete = async (task: Task) => {
+  inlineError.value = null;
+  try {
+    await deleteTaskMutation.mutateAsync(task.id);
+  } catch (error) {
+    inlineError.value = isApiError(error) ? error.message : 'Не удалось удалить задачу.';
+  }
+};
+
+const handleFinish = async () => {
+  finishError.value = null;
+  finishMessage.value = null;
+  try {
+    const result = await finishDayMutation.mutateAsync();
+    finishMessage.value = result.message;
+  } catch (error) {
+    if (isApiError(error)) {
+      finishError.value = mapFinishError(error.code);
+    } else {
+      finishError.value = 'Не удалось закрыть день.';
+    }
+  }
+};
 </script>
 
 <template>
   <section class="page">
-    <UiCard>
-      <template #header>Daily focus</template>
-      <div class="stack">
+    <div class="page-header">
+      <div>
         <h2>Today</h2>
-        <p>План на сегодня появится здесь.</p>
-        <UiInput v-model="note" placeholder="Быстрая заметка" />
-        <UiProgress :value="62" label="Progress" />
+        <p class="muted">Дата: {{ dateLabel }}</p>
+      </div>
+      <UiBadge :tone="moodTone">{{ mood }}</UiBadge>
+    </div>
+
+    <UiCard>
+      <template #header>Punk bro</template>
+      <div class="stack">
+        <UiBadge :tone="moodTone">{{ mood }}</UiBadge>
+        <p class="message">{{ moodMessage }}</p>
+        <UiProgress :value="progressValue" label="Progress" />
+      </div>
+    </UiCard>
+
+    <UiCard>
+      <template #header>Add task</template>
+      <form class="stack" @submit.prevent="handleAdd">
+        <UiInput v-model="taskTitle" placeholder="Название задачи" />
+        <UiInput v-model="taskNote" placeholder="Заметка (опционально)" />
         <div class="actions">
-          <UiButton size="sm">Save</UiButton>
-          <UiBadge tone="unlocked">Active</UiBadge>
+          <UiButton
+            size="sm"
+            type="submit"
+            :disabled="createTaskMutation.isPending.value"
+          >
+            {{ createTaskMutation.isPending.value ? 'Adding...' : 'Add task' }}
+          </UiButton>
+          <span v-if="inlineError" class="error">{{ inlineError }}</span>
         </div>
+      </form>
+    </UiCard>
+
+    <UiCard>
+      <template #header>Tasks</template>
+      <div class="stack">
+        <div v-if="todayQuery.isLoading.value" class="muted">Loading...</div>
+        <div v-else-if="todayQuery.isError.value" class="error">
+          Не удалось загрузить задачи.
+        </div>
+        <div v-else-if="sortedTasks.length === 0" class="muted">
+          Пока нет задач.
+        </div>
+        <div v-else class="task-list">
+          <div v-for="task in sortedTasks" :key="task.id" class="task-row">
+            <div class="task-main">
+              <UiButton
+                size="sm"
+                variant="ghost"
+                :disabled="toggleTaskMutation.isPending.value"
+                @click="handleToggle(task)"
+              >
+                {{ task.status === 'DONE' ? '✔' : '○' }}
+              </UiButton>
+              <div>
+                <div :class="['task-title', task.status === 'DONE' && 'task-title--done']">
+                  {{ task.title }}
+                </div>
+                <div v-if="task.note" class="task-note">{{ task.note }}</div>
+              </div>
+            </div>
+            <div class="task-actions">
+              <UiBadge :tone="task.status === 'DONE' ? 'unlocked' : 'default'">
+                {{ task.status }}
+              </UiBadge>
+              <UiButton
+                size="sm"
+                variant="ghost"
+                :disabled="deleteTaskMutation.isPending.value"
+                @click="handleDelete(task)"
+              >
+                Delete
+              </UiButton>
+            </div>
+          </div>
+        </div>
+      </div>
+    </UiCard>
+
+    <UiCard>
+      <template #header>Finish day</template>
+      <div class="stack">
+        <UiButton
+          size="sm"
+          :disabled="finishDayMutation.isPending.value || !canFinish"
+          @click="handleFinish"
+        >
+          {{ finishDayMutation.isPending.value ? 'Finishing...' : 'Finish day' }}
+        </UiButton>
+        <p v-if="finishError" class="error">{{ finishError }}</p>
       </div>
     </UiCard>
   </section>
@@ -25,7 +242,15 @@ const note = ref('');
 
 <style scoped>
 .page {
-  max-width: 720px;
+  max-width: 760px;
+  display: grid;
+  gap: 16px;
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .stack {
@@ -35,7 +260,63 @@ const note = ref('');
 
 .actions {
   display: flex;
-  gap: 12px;
   align-items: center;
+  gap: 12px;
+}
+
+.task-list {
+  display: grid;
+  gap: 12px;
+}
+
+.task-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.task-row:last-child {
+  border-bottom: none;
+}
+
+.task-main {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.task-title {
+  font-weight: 600;
+}
+
+.task-title--done {
+  text-decoration: line-through;
+  color: var(--c-muted);
+}
+
+.task-note {
+  font-size: 13px;
+  color: var(--c-muted);
+}
+
+.task-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.muted {
+  color: var(--c-muted);
+}
+
+.error {
+  color: var(--c-accent);
+}
+
+.message {
+  font-size: 14px;
 }
 </style>

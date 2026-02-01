@@ -13,7 +13,16 @@ import { TaskStatus } from '@prisma/client';
 export class TasksService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private async ensureDemoUser() {
+    await this.prisma.user.upsert({
+      where: { id: DEMO_USER_ID },
+      update: {},
+      create: { id: DEMO_USER_ID },
+    });
+  }
+
   async createTask(dto: CreateTaskDto) {
+    await this.ensureDemoUser();
     const date = getLocalDateString();
     const day = await this.prisma.day.upsert({
       where: {
