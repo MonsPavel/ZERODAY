@@ -5,17 +5,17 @@ import { UiBadge, UiButton, UiCard, UiProgress } from '@zeroday/ui';
 <template>
   <section class="page">
     <UiCard>
-      <template #header>Milestones</template>
+      <template #header>Вехи</template>
       <div class="stack">
-        <h2>Achievements</h2>
+        <h2>Достижения</h2>
         <p>Здесь будут отображаться достижения.</p>
-        <UiProgress :value="28" label="Weekly unlocks" />
+        <UiProgress :value="28" label="За неделю" />
         <div class="badges">
-          <UiBadge>Starter</UiBadge>
-          <UiBadge tone="locked">Locked</UiBadge>
-          <UiBadge tone="unlocked">Unlocked</UiBadge>
+          <UiBadge>Старт</UiBadge>
+          <UiBadge tone="locked">Закрыто</UiBadge>
+          <UiBadge tone="unlocked">Открыто</UiBadge>
         </div>
-        <UiButton variant="ghost" size="sm">View roadmap</UiButton>
+        <UiButton variant="ghost" size="sm">Смотреть план</UiButton>
       </div>
     </UiCard>
   </section>

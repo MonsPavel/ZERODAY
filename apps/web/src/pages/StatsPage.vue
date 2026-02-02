@@ -64,7 +64,7 @@ loadRange();
   <section class="page">
     <div class="page-header">
       <div>
-        <h2>Stats</h2>
+        <h2>Статистика</h2>
         <p class="muted">Короткая сводка за период</p>
       </div>
       <div class="range">
@@ -89,30 +89,30 @@ loadRange();
 
     <div class="summary">
       <UiCard>
-        <template #header>Days closed</template>
+        <template #header>Закрытые дни</template>
         <div class="summary-value">
           {{ completedDays }} / {{ range }}
         </div>
       </UiCard>
       <UiCard>
-        <template #header>Tasks done</template>
+        <template #header>Сделано задач</template>
         <div class="summary-value">
           {{ totalDone }} / {{ totalTasks }}
         </div>
       </UiCard>
       <UiCard>
-        <template #header>Streak</template>
+        <template #header>Стрик</template>
         <div class="summary-row">
-          <UiBadge tone="default">Current: {{ streak.current }}</UiBadge>
-          <UiBadge tone="default">Best: {{ streak.best }}</UiBadge>
+          <UiBadge tone="default">Текущий: {{ streak.current }}</UiBadge>
+          <UiBadge tone="default">Лучший: {{ streak.best }}</UiBadge>
         </div>
       </UiCard>
     </div>
 
     <UiCard>
-      <template #header>Daily progress</template>
+      <template #header>Дневной прогресс</template>
       <div class="stack">
-        <div v-if="statsQuery.isLoading.value" class="muted">Loading...</div>
+        <div v-if="statsQuery.isLoading.value" class="muted">Загрузка...</div>
         <div v-else-if="statsQuery.isError.value" class="muted">
           Не удалось загрузить статистику.
         </div>
@@ -126,7 +126,7 @@ loadRange();
     </UiCard>
 
     <UiCard>
-      <template #header>Insight</template>
+      <template #header>Вывод</template>
       <p class="message">{{ insight }}</p>
     </UiCard>
   </section>
