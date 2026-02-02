@@ -12,6 +12,7 @@ import { isApiError as isGameError, useFinishDayMutation, useGameStateQuery } fr
 import AchievementsGrid from '@/features/game/AchievementsGrid.vue';
 import { GOAL_TYPE_MAP } from '@/features/goals/goalType.map';
 import type { Mood, Task } from '@/shared/api/types';
+import TodaySkeleton from './TodaySkeleton.vue';
 
 const taskTitle = ref('');
 const taskNote = ref('');
@@ -100,6 +101,13 @@ const goalsSummary = computed(() => gameQuery.data.value?.goalsSummary);
 const topGoal = computed(() => goalsSummary.value?.topGoal ?? null);
 const goalsCompletedToday = computed(() => goalsSummary.value?.completedTodayCount ?? 0);
 
+const showSkeleton = computed(
+  () =>
+    gameQuery.isLoading.value ||
+    gameQuery.isFetching.value ||
+    todayQuery.isLoading.value ||
+    todayQuery.isFetching.value,
+);
 
 const canFinish = computed(
   () => tasks.value.length > 0 && doneCount.value === tasks.value.length,
@@ -231,33 +239,35 @@ watch([step1Done, step2Done, step3Done], updateOnboardingState);
       </UiCard>
     </transition>
 
-    <UiCard class="punk-card">
-      <template #header>Punk bro</template>
-      <div class="stack">
-        <div class="row">
-          <span class="mood-icon" :data-mood="mood" aria-hidden="true" />
-          <UiBadge :tone="moodTone">{{ mood }}</UiBadge>
-          <span class="muted">{{ timeOfDayLabel }}</span>
+    <TodaySkeleton v-if="true" />
+    <template v-else>
+      <UiCard class="punk-card">
+        <template #header>Punk bro</template>
+        <div class="stack">
+          <div class="row">
+            <span class="mood-icon" :data-mood="mood" aria-hidden="true" />
+            <UiBadge :tone="moodTone">{{ mood }}</UiBadge>
+            <span class="muted">{{ timeOfDayLabel }}</span>
+          </div>
+          <p class="message">{{ moodMessage }}</p>
+          <div v-if="tips.length" class="tips">
+            <UiBadge v-for="tip in tips" :key="tip" tone="default">{{ tip }}</UiBadge>
+          </div>
+          <UiProgress :value="progressValue" label="Прогресс" />
         </div>
-        <p v-if="gameQuery.isLoading.value" class="muted">...</p>
-        <p v-else class="message">{{ moodMessage }}</p>
-        <div v-if="tips.length" class="tips">
-          <UiBadge v-for="tip in tips" :key="tip" tone="default">{{ tip }}</UiBadge>
-        </div>
-        <UiProgress :value="progressValue" label="Прогресс" />
-      </div>
-    </UiCard>
+      </UiCard>
 
-    <UiCard>
-      <template #header>Стрик</template>
-      <div class="stack">
-        <div class="row">
-          <span class="streak-number">{{ streakCurrent }}</span>
-          <span class="muted">best {{ streakBest }}</span>
+      <UiCard class="streak-card">
+        <template #header>Стрик</template>
+        <div class="stack">
+          <div class="row">
+            <span class="streak-number">{{ streakCurrent }}</span>
+            <span class="muted">best {{ streakBest }}</span>
+          </div>
+          <UiProgress :value="streakProgress" label="До 7 дней" />
         </div>
-        <UiProgress :value="streakProgress" label="До 7 дней" />
-      </div>
-    </UiCard>
+      </UiCard>
+    </template>
 
     <UiCard>
       <template #header>Цели</template>
@@ -319,11 +329,10 @@ watch([step1Done, step2Done, step3Done], updateOnboardingState);
       </form>
     </UiCard>
 
-    <UiCard>
+    <UiCard class="tasks-card">
       <template #header>Задачи</template>
       <div class="stack">
-        <div v-if="todayQuery.isLoading.value" class="muted">Загрузка...</div>
-        <div v-else-if="todayQuery.isError.value" class="error">
+        <div v-if="todayQuery.isError.value" class="error">
           Не удалось загрузить задачи.
         </div>
         <div v-else class="task-list">
@@ -498,6 +507,14 @@ watch([step1Done, step2Done, step3Done], updateOnboardingState);
 .punk-card {
   position: relative;
   overflow: hidden;
+  min-height: 170px;
+}
+.streak-card {
+  min-height: 120px;
+}
+
+.tasks-card {
+  min-height: 240px;
 }
 
 .punk-card::after {
@@ -592,6 +609,7 @@ watch([step1Done, step2Done, step3Done], updateOnboardingState);
   font-size: 13px;
   color: var(--c-muted);
 }
+
 
 .task-actions {
   display: flex;

@@ -47,7 +47,6 @@ const ordered = computed(() => {
         <UiBadge :tone="item.unlocked ? 'unlocked' : 'locked'">
           {{ item.unlocked ? LABELS.unlocked : LABELS.locked }}
         </UiBadge>
-        <span class="muted">{{ item.code }}</span>
       </div>
       <div class="title">{{ item.title }}</div>
       <div class="desc">{{ item.description }}</div>
