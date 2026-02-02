@@ -16,6 +16,9 @@ const historyQuery = useHistoryQuery(range);
 const dayQuery = useHistoryDayQuery(selectedDate);
 
 const sortedDays = computed(() => historyQuery.data.value?.days ?? []);
+const isEmptyHistory = computed(
+  () => sortedDays.value.length > 0 && sortedDays.value.every((day) => day.totalCount === 0),
+);
 
 const moodTone = (day: { completed: boolean; doneCount: number; totalCount: number }) => {
   if (day.completed) {
@@ -152,6 +155,9 @@ watch(selectedDate, async (value) => {
       <template #header>Days</template>
       <div class="stack">
         <div v-if="historyQuery.isLoading.value" class="muted">Loading...</div>
+        <div v-else-if="isEmptyHistory" class="empty">
+          Истории нет. Сегодня будет первый след.
+        </div>
         <div v-else class="list">
           <button
             v-for="day in sortedDays"
@@ -240,6 +246,12 @@ watch(selectedDate, async (value) => {
 .list {
   display: grid;
   gap: 8px;
+}
+
+.empty {
+  text-align: center;
+  color: var(--muted);
+  padding: 16px 0;
 }
 
 .row {
