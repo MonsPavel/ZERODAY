@@ -333,12 +333,18 @@ export class GameService {
       let day = await this.getToday(tx);
 
       if (day.tasks.length === 0) {
-        throw new BadRequestException({ code: 'NO_TASKS', message: 'Нет задач на сегодня.' });
+        throw new BadRequestException({
+          code: 'NO_TASKS',
+          message: 'Ноль задач. День ещё не начался.',
+        });
       }
 
       const doneCount = day.tasks.filter((task) => task.status === TaskStatus.DONE).length;
       if (doneCount < day.tasks.length) {
-        throw new BadRequestException({ code: 'NOT_ALL_DONE', message: 'Не все задачи выполнены.' });
+        throw new BadRequestException({
+          code: 'NOT_ALL_DONE',
+          message: 'Хвосты остались. Добей их.',
+        });
       }
 
       const wasCompleted = day.completed;

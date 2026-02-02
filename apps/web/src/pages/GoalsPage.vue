@@ -53,13 +53,13 @@ const goalTypeOptions = Object.entries(GOAL_TYPE_MAP).map(([key, value]) => ({
   <section class="page">
     <div class="page-header">
       <div>
-        <h2>Goals</h2>
+        <h2>Цели</h2>
         <p class="muted">Долгосрочные цели и прогресс</p>
       </div>
     </div>
 
     <UiCard>
-      <template #header>New goal</template>
+      <template #header>Новая цель</template>
       <form class="stack" @submit.prevent="handleCreate">
         <UiInput v-model="title" placeholder="Название цели" />
         <div class="row">
@@ -73,13 +73,13 @@ const goalTypeOptions = Object.entries(GOAL_TYPE_MAP).map(([key, value]) => ({
             <span class="hint">{{ GOAL_TYPE_MAP[type].hint }}</span>
           </label>
           <label class="field">
-            <span class="label">Target</span>
+            <span class="label">Цель</span>
             <input v-model.number="targetInt" type="number" min="1" max="365" class="select" />
           </label>
         </div>
         <div class="actions">
           <UiButton size="sm" type="submit" :disabled="createGoalMutation.isPending.value">
-            {{ createGoalMutation.isPending.value ? 'Saving...' : 'Create goal' }}
+            {{ createGoalMutation.isPending.value ? 'Сохраняю...' : 'Создать цель' }}
           </UiButton>
           <span v-if="inlineError" class="error">{{ inlineError }}</span>
         </div>
@@ -87,9 +87,9 @@ const goalTypeOptions = Object.entries(GOAL_TYPE_MAP).map(([key, value]) => ({
     </UiCard>
 
     <UiCard>
-      <template #header>Active goals</template>
+      <template #header>Активные цели</template>
       <div class="stack">
-        <div v-if="goalsQuery.isLoading.value" class="muted">Loading...</div>
+        <div v-if="goalsQuery.isLoading.value" class="muted">Загрузка...</div>
         <div v-else-if="goals.length === 0" class="muted">
           Целей нет. Выбери, куда бить.
         </div>
@@ -114,7 +114,7 @@ const goalTypeOptions = Object.entries(GOAL_TYPE_MAP).map(([key, value]) => ({
                 :disabled="toggleGoalMutation.isPending.value"
                 @click="toggleGoalMutation.mutate(goal.id)"
               >
-                {{ goal.isActive ? 'Archive' : 'Unarchive' }}
+                {{ goal.isActive ? 'В архив' : 'Вернуть' }}
               </UiButton>
               <UiButton
                 size="sm"
@@ -122,7 +122,7 @@ const goalTypeOptions = Object.entries(GOAL_TYPE_MAP).map(([key, value]) => ({
                 :disabled="deleteGoalMutation.isPending.value"
                 @click="deleteGoalMutation.mutate(goal.id)"
               >
-                Delete
+                Удалить
               </UiButton>
             </div>
           </div>

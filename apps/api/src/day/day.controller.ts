@@ -29,11 +29,11 @@ export class DayController {
     examples: {
       noTasks: {
         summary: 'No tasks for today',
-        value: { code: 'NO_TASKS', message: 'Нет задач на сегодня.' },
+        value: { code: 'NO_TASKS', message: 'Ноль задач. День ещё не начался.' },
       },
       notAllDone: {
         summary: 'Not all tasks completed',
-        value: { code: 'NOT_ALL_DONE', message: 'Не все задачи выполнены.' },
+        value: { code: 'NOT_ALL_DONE', message: 'Хвосты остались. Добей их.' },
       },
     },
   })

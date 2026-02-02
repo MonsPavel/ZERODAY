@@ -8,6 +8,11 @@ const props = defineProps<{
   achievements: AchievementUnlocked[];
 }>();
 
+const LABELS = {
+  unlocked: 'Открыто',
+  locked: 'Закрыто',
+} as const;
+
 const ordered = computed(() => {
   const unlockedMap = new Map(props.achievements.map((item) => [item.code, item]));
   const catalog = Object.entries(ACHIEVEMENTS_MAP).map(([code, info]) => ({
@@ -40,7 +45,7 @@ const ordered = computed(() => {
     >
       <div class="row">
         <UiBadge :tone="item.unlocked ? 'unlocked' : 'locked'">
-          {{ item.unlocked ? 'Unlocked' : 'Locked' }}
+          {{ item.unlocked ? LABELS.unlocked : LABELS.locked }}
         </UiBadge>
         <span class="muted">{{ item.code }}</span>
       </div>

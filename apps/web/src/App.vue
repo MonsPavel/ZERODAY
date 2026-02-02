@@ -12,16 +12,15 @@ const toggleLabel = computed(() => (themeStore.theme === 'mono' ? 'Acid' : 'Mono
     <header class="header">
       <div class="brand">
         <h1 class="title">Zeroday</h1>
-        <span class="subtitle">UI Kit</span>
       </div>
       <nav class="nav">
-        <RouterLink class="nav-link" to="/today">Today</RouterLink>
-        <RouterLink class="nav-link" to="/achievements">Achievements</RouterLink>
-        <RouterLink class="nav-link" to="/history">History</RouterLink>
-        <RouterLink class="nav-link" to="/goals">Goals</RouterLink>
-        <RouterLink class="nav-link" to="/stats">Stats</RouterLink>
+        <RouterLink class="nav-link" to="/today">Сегодня</RouterLink>
+        <RouterLink class="nav-link" to="/achievements">Достижения</RouterLink>
+        <RouterLink class="nav-link" to="/history">История</RouterLink>
+        <RouterLink class="nav-link" to="/goals">Цели</RouterLink>
+        <RouterLink class="nav-link" to="/stats">Статистика</RouterLink>
         <UiButton variant="ghost" size="sm" @click="themeStore.toggleTheme()">
-          Theme: {{ toggleLabel }}
+          Тема: {{ toggleLabel }}
         </UiButton>
       </nav>
     </header>

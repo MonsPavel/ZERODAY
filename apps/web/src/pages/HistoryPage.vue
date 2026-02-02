@@ -124,7 +124,7 @@ watch(selectedDate, async (value) => {
   <section class="page">
     <div class="page-header">
       <div>
-        <h2>History</h2>
+        <h2>История</h2>
         <p class="muted">Последние дни и прогресс</p>
       </div>
       <div class="range">
@@ -141,20 +141,20 @@ watch(selectedDate, async (value) => {
     </div>
 
     <UiCard>
-      <template #header>Streak trail</template>
+      <template #header>След стрика</template>
       <div class="stack">
         <StreakTrail :days="sortedDays" />
         <div class="streak-meta">
-          <UiBadge tone="default">Current: {{ historyQuery.data.value?.streak.current ?? 0 }}</UiBadge>
-          <UiBadge tone="default">Best: {{ historyQuery.data.value?.streak.best ?? 0 }}</UiBadge>
+          <UiBadge tone="default">Текущий: {{ historyQuery.data.value?.streak.current ?? 0 }}</UiBadge>
+          <UiBadge tone="default">Лучший: {{ historyQuery.data.value?.streak.best ?? 0 }}</UiBadge>
         </div>
       </div>
     </UiCard>
 
     <UiCard>
-      <template #header>Days</template>
+      <template #header>Дни</template>
       <div class="stack">
-        <div v-if="historyQuery.isLoading.value" class="muted">Loading...</div>
+        <div v-if="historyQuery.isLoading.value" class="muted">Загрузка...</div>
         <div v-else-if="isEmptyHistory" class="empty">
           Истории нет. Сегодня будет первый след.
         </div>
@@ -168,7 +168,7 @@ watch(selectedDate, async (value) => {
           >
             <div>
               <div class="date">{{ day.date }}</div>
-              <div class="muted">{{ day.doneCount }}/{{ day.totalCount }} done</div>
+              <div class="muted">{{ day.doneCount }}/{{ day.totalCount }} сделано</div>
             </div>
             <UiBadge :tone="moodTone(day)">{{ moodLabel(day) }}</UiBadge>
           </button>
@@ -186,11 +186,11 @@ watch(selectedDate, async (value) => {
             </UiBadge>
           </div>
           <UiButton ref="closeButtonRef" size="sm" variant="ghost" @click="closeDrawer">
-            Close
+            Закрыть
           </UiButton>
         </div>
         <div class="stack">
-          <div v-if="dayQuery.isLoading.value" class="muted">Loading...</div>
+          <div v-if="dayQuery.isLoading.value" class="muted">Загрузка...</div>
           <div v-else-if="dayQuery.isError.value" class="muted">
             Не удалось загрузить день.
           </div>

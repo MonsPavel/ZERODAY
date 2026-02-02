@@ -220,7 +220,7 @@ watch([step1Done, step2Done, step3Done], updateOnboardingState);
             </div>
             <div class="onboarding-item">
               <span :class="['check', step3Done && 'check--done']">•</span>
-              <span>Нажми Finish day. Забери стрик.</span>
+              <span>Закрой день. Забери стрик.</span>
             </div>
           </div>
           <div class="onboarding-actions">
@@ -244,25 +244,25 @@ watch([step1Done, step2Done, step3Done], updateOnboardingState);
         <div v-if="tips.length" class="tips">
           <UiBadge v-for="tip in tips" :key="tip" tone="default">{{ tip }}</UiBadge>
         </div>
-        <UiProgress :value="progressValue" label="Progress" />
+        <UiProgress :value="progressValue" label="Прогресс" />
       </div>
     </UiCard>
 
     <UiCard>
-      <template #header>Streak</template>
+      <template #header>Стрик</template>
       <div class="stack">
         <div class="row">
           <span class="streak-number">{{ streakCurrent }}</span>
           <span class="muted">best {{ streakBest }}</span>
         </div>
-        <UiProgress :value="streakProgress" label="To 7 days" />
+        <UiProgress :value="streakProgress" label="До 7 дней" />
       </div>
     </UiCard>
 
     <UiCard>
-      <template #header>Goals</template>
+      <template #header>Цели</template>
       <div class="stack">
-        <div v-if="gameQuery.isLoading.value" class="muted">Loading...</div>
+        <div v-if="gameQuery.isLoading.value" class="muted">Загрузка...</div>
         <div v-else-if="!topGoal" class="muted">Целей нет — выбери, куда бить.</div>
         <div v-else class="stack">
           <div class="row">
@@ -273,7 +273,7 @@ watch([step1Done, step2Done, step3Done], updateOnboardingState);
                 {{ GOAL_TYPE_MAP[topGoal.type].progressUnit }}
               </div>
             </div>
-            <UiBadge tone="default">Top goal</UiBadge>
+            <UiBadge tone="default">Главная цель</UiBadge>
           </div>
           <UiProgress
             :value="Math.min(100, Math.round((topGoal.progressInt / topGoal.targetInt) * 100))"
@@ -286,9 +286,9 @@ watch([step1Done, step2Done, step3Done], updateOnboardingState);
     </UiCard>
 
     <UiCard>
-      <template #header>Achievements</template>
+      <template #header>Достижения</template>
       <div class="stack">
-        <div v-if="gameQuery.isLoading.value" class="muted">Loading...</div>
+        <div v-if="gameQuery.isLoading.value" class="muted">Загрузка...</div>
         <div v-else>
           <p v-if="(gameQuery.data.value?.achievements.length ?? 0) === 0" class="muted">
             Достижения появляются по ходу. Ничего выбивать специально не нужно.
@@ -299,7 +299,7 @@ watch([step1Done, step2Done, step3Done], updateOnboardingState);
     </UiCard>
 
     <UiCard>
-      <template #header>Add task</template>
+      <template #header>Добавить задачу</template>
       <form class="stack" @submit.prevent="handleAdd">
         <UiInput v-model="taskTitle" placeholder="Название задачи" />
         <UiInput v-model="taskNote" placeholder="Заметка (опционально)" />
@@ -309,7 +309,7 @@ watch([step1Done, step2Done, step3Done], updateOnboardingState);
             type="submit"
             :disabled="createTaskMutation.isPending.value"
           >
-            {{ createTaskMutation.isPending.value ? 'Adding...' : 'Add task' }}
+            {{ createTaskMutation.isPending.value ? 'Добавляю...' : 'Добавить' }}
           </UiButton>
           <span v-if="inlineError" class="error">{{ inlineError }}</span>
         </div>
@@ -320,9 +320,9 @@ watch([step1Done, step2Done, step3Done], updateOnboardingState);
     </UiCard>
 
     <UiCard>
-      <template #header>Tasks</template>
+      <template #header>Задачи</template>
       <div class="stack">
-        <div v-if="todayQuery.isLoading.value" class="muted">Loading...</div>
+        <div v-if="todayQuery.isLoading.value" class="muted">Загрузка...</div>
         <div v-else-if="todayQuery.isError.value" class="error">
           Не удалось загрузить задачи.
         </div>
@@ -354,7 +354,7 @@ watch([step1Done, step2Done, step3Done], updateOnboardingState);
                 :disabled="deleteTaskMutation.isPending.value"
                 @click="handleDelete(task)"
               >
-                Delete
+                Удалить
               </UiButton>
             </div>
           </div>
@@ -363,14 +363,14 @@ watch([step1Done, step2Done, step3Done], updateOnboardingState);
     </UiCard>
 
     <UiCard>
-      <template #header>Finish day</template>
+      <template #header>Закрыть день</template>
       <div class="stack">
         <UiButton
           size="sm"
           :disabled="finishDayMutation.isPending.value || !canFinish"
           @click="handleFinish"
         >
-          {{ finishDayMutation.isPending.value ? 'Finishing...' : 'Finish day' }}
+          {{ finishDayMutation.isPending.value ? 'Закрываю...' : 'Закрыть день' }}
         </UiButton>
         <p v-if="tasks.length > 0 && doneCount === 0" class="muted">
           Сначала закрой хотя бы одну.

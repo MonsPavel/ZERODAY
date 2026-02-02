@@ -25,7 +25,7 @@ const dateLabel = computed(() => {
 <template>
   <div
     class="row"
-    :data-tooltip="`Дата: ${day.date} • DONE: ${day.doneCount} • Всего: ${day.totalCount} • Closed: ${day.completed ? 'yes' : 'no'}`"
+    :data-tooltip="`Дата: ${day.date} • DONE: ${day.doneCount} • Всего: ${day.totalCount} • Закрыт: ${day.completed ? 'да' : 'нет'}`"
   >
     <div class="date">{{ dateLabel }}</div>
     <div class="meta muted">{{ day.doneCount }}/{{ day.totalCount }}</div>
@@ -33,7 +33,7 @@ const dateLabel = computed(() => {
       <UiProgress :value="progressValue" />
     </div>
     <UiBadge :tone="day.completed ? 'good' : 'neutral'">
-      {{ day.completed ? 'DONE' : 'OPEN' }}
+      {{ day.completed ? 'Закрыт' : 'Открыт' }}
     </UiBadge>
   </div>
 </template>
