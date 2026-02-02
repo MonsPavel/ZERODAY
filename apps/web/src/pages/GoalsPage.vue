@@ -90,7 +90,9 @@ const goalTypeOptions = Object.entries(GOAL_TYPE_MAP).map(([key, value]) => ({
       <template #header>Active goals</template>
       <div class="stack">
         <div v-if="goalsQuery.isLoading.value" class="muted">Loading...</div>
-        <div v-else-if="goals.length === 0" class="muted">Пока нет активных целей.</div>
+        <div v-else-if="goals.length === 0" class="muted">
+          Целей нет. Выбери, куда бить.
+        </div>
         <div v-else class="list">
           <div v-for="goal in goals" :key="goal.id" class="goal">
             <div class="goal-head">

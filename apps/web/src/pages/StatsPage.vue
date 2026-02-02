@@ -116,6 +116,9 @@ loadRange();
         <div v-else-if="statsQuery.isError.value" class="muted">
           Не удалось загрузить статистику.
         </div>
+        <div v-else-if="totalTasks === 0" class="muted">
+          Пока нечего считать. Сначала сделай что-нибудь.
+        </div>
         <div v-else class="list">
           <StatsDayRow v-for="day in days" :key="day.date" :day="day" />
         </div>

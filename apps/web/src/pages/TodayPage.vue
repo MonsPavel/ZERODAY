@@ -123,10 +123,10 @@ const updateOnboardingState = () => {
 
 const mapFinishError = (code?: string) => {
   if (code === 'NO_TASKS') {
-    return 'Ноль задач. Сначала задай хоть одну.';
+    return 'Ноль задач. День ещё не начался.';
   }
   if (code === 'NOT_ALL_DONE') {
-    return 'Сначала добей хвосты. Потом закрываем день.';
+    return 'Хвосты остались. Добей их.';
   }
   return 'Что-то пошло не так. Попробуй ещё раз.';
 };
@@ -290,6 +290,9 @@ watch([step1Done, step2Done, step3Done], updateOnboardingState);
       <div class="stack">
         <div v-if="gameQuery.isLoading.value" class="muted">Loading...</div>
         <div v-else>
+          <p v-if="(gameQuery.data.value?.achievements.length ?? 0) === 0" class="muted">
+            Достижения появляются по ходу. Ничего выбивать специально не нужно.
+          </p>
           <AchievementsGrid :achievements="gameQuery.data.value?.achievements ?? []" />
         </div>
       </div>
@@ -310,6 +313,9 @@ watch([step1Done, step2Done, step3Done], updateOnboardingState);
           </UiButton>
           <span v-if="inlineError" class="error">{{ inlineError }}</span>
         </div>
+        <p v-if="tasks.length === 0 && !onboardingVisible" class="muted">
+          Пусто. Добавь первую задачу — и поехали.
+        </p>
       </form>
     </UiCard>
 
@@ -319,9 +325,6 @@ watch([step1Done, step2Done, step3Done], updateOnboardingState);
         <div v-if="todayQuery.isLoading.value" class="muted">Loading...</div>
         <div v-else-if="todayQuery.isError.value" class="error">
           Не удалось загрузить задачи.
-        </div>
-        <div v-else-if="sortedTasks.length === 0" class="muted">
-          Пока нет задач.
         </div>
         <div v-else class="task-list">
           <div v-for="task in sortedTasks" :key="task.id" class="task-row">
@@ -369,6 +372,9 @@ watch([step1Done, step2Done, step3Done], updateOnboardingState);
         >
           {{ finishDayMutation.isPending.value ? 'Finishing...' : 'Finish day' }}
         </UiButton>
+        <p v-if="tasks.length > 0 && doneCount === 0" class="muted">
+          Сначала закрой хотя бы одну.
+        </p>
         <p v-if="finishError" class="error">{{ finishError }}</p>
       </div>
     </UiCard>
