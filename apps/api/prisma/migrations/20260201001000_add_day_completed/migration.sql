@@ -1,0 +1,1 @@
+ALTER TABLE "Day" ADD COLUMN "completed" BOOLEAN NOT NULL DEFAULT false;

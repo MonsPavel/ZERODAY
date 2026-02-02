@@ -1,0 +1,52 @@
+:root {
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SFMono-Regular", "Consolas", monospace;
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+html[data-theme="mono"] {
+  --bg: #0e1014;
+  --fg: #f5f6f7;
+  --muted: #a1a6b3;
+  --border: #2a2f3a;
+  --card: #161a22;
+  --shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+  --accent: #f0f0f0;
+  --accent-contrast: #0e1014;
+  --good: #cfe9d5;
+  --neutral: #d8dbe2;
+  --bad: #f1c7c7;
+}
+
+html[data-theme="acid"] {
+  --bg: #0e1014;
+  --fg: #f5f6f7;
+  --muted: #9aa2b0;
+  --border: #26302f;
+  --card: #141a1f;
+  --shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+  --accent: #9bff4d;
+  --accent-contrast: #0b0f12;
+  --good: #9bff4d;
+  --neutral: #d4d7df;
+  --bad: #ff7b7b;
+}
+
+html {
+  color-scheme: dark;
+}
+
+/* Map UI tokens to app tokens */
+:root {
+  --c-bg: var(--bg);
+  --c-surface: var(--card);
+  --c-text: var(--fg);
+  --c-muted: var(--muted);
+  --c-border: var(--border);
+  --c-accent: var(--accent);
+  --c-accent-weak: var(--border);
+  --c-fg: var(--fg);
+  --skeleton: var(--muted);
+}

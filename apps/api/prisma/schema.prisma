@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TaskStatus {
+  TODO
+  DONE
+}
+
+enum GoalType {
+  COUNT_TASKS_DONE
+  FINISH_DAYS
+}
+
+model User {
+  id               Int              @id @default(autoincrement())
+  createdAt        DateTime         @default(now())
+  days             Day[]
+  tasks            Task[]
+  streak           Streak?
+  achievements     UserAchievement[]
+  goals            Goal[]
+}
+
+model Day {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  date      String
+  completed Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+  tasks     Task[]
+
+  @@unique([userId, date])
+}
+
+model Task {
+  id        Int        @id @default(autoincrement())
+  userId    Int
+  dayId     Int
+  title     String
+  note      String?
+  status    TaskStatus @default(TODO)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  user      User       @relation(fields: [userId], references: [id])
+  day       Day        @relation(fields: [dayId], references: [id])
+}
+
+model Achievement {
+  id          Int               @id @default(autoincrement())
+  code        String            @unique
+  title       String
+  description String
+  createdAt   DateTime          @default(now())
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  id            Int         @id @default(autoincrement())
+  userId        Int
+  achievementId Int
+  unlockedAt    DateTime    @default(now())
+  user          User        @relation(fields: [userId], references: [id])
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+
+  @@unique([userId, achievementId])
+}
+
+model Streak {
+  id         Int      @id @default(autoincrement())
+  userId     Int      @unique
+  currentInt Int
+  bestInt    Int
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id])
+}
+
+model Goal {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  title       String
+  type        GoalType
+  targetInt   Int
+  progressInt Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@index([userId, isActive])
+}
