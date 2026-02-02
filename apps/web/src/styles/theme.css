@@ -48,4 +48,5 @@ html {
   --c-accent: var(--accent);
   --c-accent-weak: var(--border);
   --c-fg: var(--fg);
+  --skeleton: var(--muted);
 }
