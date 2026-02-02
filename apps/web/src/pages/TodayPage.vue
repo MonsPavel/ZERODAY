@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { UiBadge, UiButton, UiCard, UiInput, UiProgress } from '@zeroday/ui';
 import {
   isApiError as isTodayError,
@@ -18,6 +18,9 @@ const taskNote = ref('');
 const finishMessage = ref<string | null>(null);
 const finishError = ref<string | null>(null);
 const inlineError = ref<string | null>(null);
+const onboardingVisible = ref(false);
+const onboardingMounted = ref(false);
+const ONBOARDING_KEY = 'zeroday_onboarded';
 
 const todayQuery = useTodayQuery();
 const createTaskMutation = useCreateTaskMutation();
@@ -102,6 +105,22 @@ const canFinish = computed(
   () => tasks.value.length > 0 && doneCount.value === tasks.value.length,
 );
 
+const step1Done = computed(() => tasks.value.length > 0);
+const step2Done = computed(() => doneCount.value > 0);
+const step3Done = computed(() => completed.value);
+
+const markOnboarded = () => {
+  onboardingVisible.value = false;
+  localStorage.setItem(ONBOARDING_KEY, '1');
+};
+
+
+const updateOnboardingState = () => {
+  if (step3Done.value) {
+    markOnboarded();
+  }
+};
+
 const mapFinishError = (code?: string) => {
   if (code === 'NO_TASKS') {
     return 'Ноль задач. Сначала задай хоть одну.';
@@ -165,6 +184,15 @@ const handleFinish = async () => {
     }
   }
 };
+
+onMounted(() => {
+  onboardingMounted.value = true;
+  const onboarded = localStorage.getItem(ONBOARDING_KEY) === '1';
+  onboardingVisible.value = !onboarded;
+  updateOnboardingState();
+});
+
+watch([step1Done, step2Done, step3Done], updateOnboardingState);
 </script>
 
 <template>
@@ -176,6 +204,32 @@ const handleFinish = async () => {
       </div>
       <UiBadge :tone="moodTone">{{ mood }}</UiBadge>
     </div>
+
+    <transition name="fade">
+      <UiCard v-if="onboardingVisible && onboardingMounted" class="onboarding-card">
+        <template #header>Первый заход</template>
+        <div class="onboarding">
+          <div class="onboarding-list">
+            <div class="onboarding-item">
+              <span :class="['check', step1Done && 'check--done']">•</span>
+              <span>Добавь 1 задачу на сегодня.</span>
+            </div>
+            <div class="onboarding-item">
+              <span :class="['check', step2Done && 'check--done']">•</span>
+              <span>Закрой её. DONE — значит DONE.</span>
+            </div>
+            <div class="onboarding-item">
+              <span :class="['check', step3Done && 'check--done']">•</span>
+              <span>Нажми Finish day. Забери стрик.</span>
+            </div>
+          </div>
+          <div class="onboarding-actions">
+            <UiButton size="sm" @click="markOnboarded">Понял</UiButton>
+            <UiButton size="sm" variant="ghost" @click="markOnboarded">Skip</UiButton>
+          </div>
+        </div>
+      </UiCard>
+    </transition>
 
     <UiCard class="punk-card">
       <template #header>Punk bro</template>
@@ -318,6 +372,7 @@ const handleFinish = async () => {
         <p v-if="finishError" class="error">{{ finishError }}</p>
       </div>
     </UiCard>
+
   </section>
 </template>
 
@@ -342,6 +397,68 @@ const handleFinish = async () => {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.onboarding-card {
+  border: 1px solid var(--border);
+}
+
+.onboarding {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.onboarding-list {
+  display: grid;
+  gap: 8px;
+}
+
+.onboarding-item {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  color: var(--fg);
+}
+
+.check {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+}
+
+.check--done {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.onboarding-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 160ms ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-enter-active,
+  .fade-leave-active {
+    transition: none;
+  }
 }
 
 .mood-icon {
