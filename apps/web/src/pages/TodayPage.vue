@@ -239,7 +239,7 @@ watch([step1Done, step2Done, step3Done], updateOnboardingState);
       </UiCard>
     </transition>
 
-    <TodaySkeleton v-if="true" />
+    <TodaySkeleton v-if="showSkeleton" />
     <template v-else>
       <UiCard class="punk-card">
         <template #header>Punk bro</template>
