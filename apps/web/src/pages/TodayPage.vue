@@ -105,6 +105,7 @@ const showSkeleton = computed(
     todayQuery.isLoading.value ||
     todayQuery.isFetching.value,
 );
+const isTasksLoading = computed(() => todayQuery.isLoading.value || todayQuery.isFetching.value);
 
 const canFinish = computed(
   () => tasks.value.length > 0 && doneCount.value === tasks.value.length,
@@ -319,7 +320,8 @@ watch([step1Done, step2Done, step3Done], updateOnboardingState);
     <UiCard class="tasks-card">
       <template #header>Задачи</template>
       <div class="stack">
-        <div v-if="todayQuery.isError.value" class="error">
+        <div v-if="isTasksLoading" class="tasks-skeleton" />
+        <div v-else-if="todayQuery.isError.value" class="error">
           Не удалось загрузить задачи.
         </div>
         <div v-else class="task-list">
@@ -550,6 +552,23 @@ watch([step1Done, step2Done, step3Done], updateOnboardingState);
 .task-list {
   display: grid;
   gap: 12px;
+}
+
+.tasks-skeleton {
+  height: 240px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--card) 25%, var(--border) 45%, var(--card) 65%);
+  background-size: 200% 100%;
+  animation: skeletonMove 1.2s ease-in-out infinite;
+}
+
+@keyframes skeletonMove {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 .task-row {

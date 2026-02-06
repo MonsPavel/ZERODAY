@@ -6,6 +6,8 @@ export const useHistoryQuery = (days: Ref<number>) =>
   useQuery({
     queryKey: computed(() => ['history', days.value]),
     queryFn: () => getHistory(days.value),
+    keepPreviousData: true,
+    placeholderData: (previous) => previous,
   });
 
 export const useHistoryDayQuery = (date: Ref<string | null>) =>
@@ -13,4 +15,6 @@ export const useHistoryDayQuery = (date: Ref<string | null>) =>
     queryKey: computed(() => ['historyDay', date.value]),
     queryFn: () => getHistoryDay(date.value ?? ''),
     enabled: computed(() => Boolean(date.value)),
+    keepPreviousData: true,
+    placeholderData: (previous) => previous,
   });
