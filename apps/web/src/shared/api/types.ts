@@ -26,6 +26,10 @@ export type ApiError = {
   message: string;
 };
 
+export type AuthToken = {
+  token: string;
+};
+
 export type Streak = {
   current: number;
   best: number;

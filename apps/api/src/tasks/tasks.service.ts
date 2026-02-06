@@ -3,7 +3,6 @@ import { GoalType, TaskStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { getLocalDateString } from '../common/date';
-import { DEMO_USER_ID } from '../common/constants';
 import { GoalsService } from '../goals/goals.service';
 
 @Injectable()
@@ -13,34 +12,25 @@ export class TasksService {
     private readonly goalsService: GoalsService,
   ) {}
 
-  private async ensureDemoUser() {
-    await this.prisma.user.upsert({
-      where: { id: DEMO_USER_ID },
-      update: {},
-      create: { id: DEMO_USER_ID },
-    });
-  }
-
-  async createTask(dto: CreateTaskDto) {
-    await this.ensureDemoUser();
+  async createTask(dto: CreateTaskDto, userId: string) {
     const date = getLocalDateString();
     const day = await this.prisma.day.upsert({
       where: {
         userId_date: {
-          userId: DEMO_USER_ID,
+          userId,
           date,
         },
       },
       update: {},
       create: {
-        userId: DEMO_USER_ID,
+        userId,
         date,
       },
     });
 
     return this.prisma.task.create({
       data: {
-        userId: DEMO_USER_ID,
+        userId,
         dayId: day.id,
         title: dto.title,
         note: dto.note,
@@ -48,7 +38,7 @@ export class TasksService {
     });
   }
 
-  async toggleTask(id: number) {
+  async toggleTask(id: number, userId: string) {
     return this.prisma.$transaction(async (tx) => {
       const task = await tx.task.findUnique({
         where: { id },
@@ -61,7 +51,7 @@ export class TasksService {
         });
       }
 
-      if (task.userId !== DEMO_USER_ID) {
+      if (task.userId !== userId) {
         throw new ForbiddenException({
           code: 'NOT_FOUND',
           message: 'Task not found.',
@@ -76,14 +66,14 @@ export class TasksService {
       });
 
       if (task.status === TaskStatus.TODO && nextStatus === TaskStatus.DONE) {
-        await this.goalsService.incrementGoals(GoalType.COUNT_TASKS_DONE, tx);
+        await this.goalsService.incrementGoals(userId, GoalType.COUNT_TASKS_DONE, tx);
       }
 
       return updated;
     });
   }
 
-  async deleteTask(id: number) {
+  async deleteTask(id: number, userId: string) {
     const task = await this.prisma.task.findUnique({
       where: { id },
     });
@@ -95,7 +85,7 @@ export class TasksService {
       });
     }
 
-    if (task.userId !== DEMO_USER_ID) {
+    if (task.userId !== userId) {
       throw new ForbiddenException({
         code: 'NOT_FOUND',
         message: 'Task not found.',

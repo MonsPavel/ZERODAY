@@ -94,9 +94,6 @@ const moodMessage = computed(() => {
 
 const timeOfDayLabel = computed(() => gameQuery.data.value?.timeOfDay ?? '—');
 const tips = computed(() => gameQuery.data.value?.tips ?? []);
-const streakCurrent = computed(() => gameQuery.data.value?.streak.current ?? 0);
-const streakBest = computed(() => gameQuery.data.value?.streak.best ?? 0);
-const streakProgress = computed(() => Math.min(100, Math.round((streakCurrent.value / 7) * 100)));
 const goalsSummary = computed(() => gameQuery.data.value?.goalsSummary);
 const topGoal = computed(() => goalsSummary.value?.topGoal ?? null);
 const goalsCompletedToday = computed(() => goalsSummary.value?.completedTodayCount ?? 0);
@@ -257,16 +254,6 @@ watch([step1Done, step2Done, step3Done], updateOnboardingState);
         </div>
       </UiCard>
 
-      <UiCard class="streak-card">
-        <template #header>Стрик</template>
-        <div class="stack">
-          <div class="row">
-            <span class="streak-number">{{ streakCurrent }}</span>
-            <span class="muted">best {{ streakBest }}</span>
-          </div>
-          <UiProgress :value="streakProgress" label="До 7 дней" />
-        </div>
-      </UiCard>
     </template>
 
     <UiCard>
@@ -509,10 +496,6 @@ watch([step1Done, step2Done, step3Done], updateOnboardingState);
   overflow: hidden;
   min-height: 170px;
 }
-.streak-card {
-  min-height: 120px;
-}
-
 .tasks-card {
   min-height: 240px;
 }
@@ -556,10 +539,6 @@ watch([step1Done, step2Done, step3Done], updateOnboardingState);
   flex-wrap: wrap;
 }
 
-.streak-number {
-  font-size: 28px;
-  font-weight: 700;
-}
 
 
 .actions {

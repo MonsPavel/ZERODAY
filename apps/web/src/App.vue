@@ -1,10 +1,21 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useQueryClient } from '@tanstack/vue-query';
 import { UiButton } from '@zeroday/ui';
 import { useThemeStore } from './stores/theme';
+import { useAuthStore } from './stores/auth';
+import { router } from './router';
 
 const themeStore = useThemeStore();
+const authStore = useAuthStore();
+const queryClient = useQueryClient();
 const toggleLabel = computed(() => (themeStore.theme === 'mono' ? 'Acid' : 'Mono'));
+
+const handleLogout = async () => {
+  authStore.clearToken();
+  await queryClient.clear();
+  router.replace('login');
+};
 </script>
 
 <template>
@@ -14,14 +25,13 @@ const toggleLabel = computed(() => (themeStore.theme === 'mono' ? 'Acid' : 'Mono
         <h1 class="title">Zeroday</h1>
       </div>
       <nav class="nav">
-        <RouterLink class="nav-link" to="/today">Сегодня</RouterLink>
-        <RouterLink class="nav-link" to="/achievements">Достижения</RouterLink>
-        <RouterLink class="nav-link" to="/history">История</RouterLink>
-        <RouterLink class="nav-link" to="/goals">Цели</RouterLink>
-        <RouterLink class="nav-link" to="/stats">Статистика</RouterLink>
+        <RouterLink class="nav-link" to="/today">Today</RouterLink>
+        <RouterLink class="nav-link" to="/history">History</RouterLink>
+        <RouterLink class="nav-link" to="/stats">Stats</RouterLink>
         <UiButton variant="ghost" size="sm" @click="themeStore.toggleTheme()">
           Тема: {{ toggleLabel }}
         </UiButton>
+        <UiButton variant="ghost" size="sm" @click="handleLogout">Logout</UiButton>
       </nav>
     </header>
     <main class="content">

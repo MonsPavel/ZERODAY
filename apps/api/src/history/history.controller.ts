@@ -1,8 +1,9 @@
-import { BadRequestException, Controller, Get, Param, Query } from '@nestjs/common';
-import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { BadRequestException, Controller, Get, Param, Query, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { HistoryService } from './history.service';
 import { HistoryDetailDto, HistoryResponseDto } from './dto/history.dto';
 import { HistoryQueryDto } from './dto/history-query.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 const isValidDate = (dateStr: string) => {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
@@ -30,20 +31,22 @@ const assertValidDate = (dateStr: string) => {
 };
 
 @ApiTags('history')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('history')
 export class HistoryController {
   constructor(private readonly historyService: HistoryService) {}
 
   @Get()
   @ApiOkResponse({ type: HistoryResponseDto })
-  getHistory(@Query() query: HistoryQueryDto) {
-    return this.historyService.getHistory(query.days);
+  getHistory(@Query() query: HistoryQueryDto, @Req() req: { user: { id: string } }) {
+    return this.historyService.getHistory(req.user.id, query.days);
   }
 
   @Get(':date')
   @ApiOkResponse({ type: HistoryDetailDto })
-  getDay(@Param('date') date: string) {
+  getDay(@Param('date') date: string, @Req() req: { user: { id: string } }) {
     assertValidDate(date);
-    return this.historyService.getDayDetails(date);
+    return this.historyService.getDayDetails(req.user.id, date);
   }
 }
