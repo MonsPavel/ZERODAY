@@ -1,16 +1,41 @@
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: zeroday-postgres
-    restart: unless-stopped
+  db:
+    image: postgres:16-alpine
+    container_name: zeroday-db
     environment:
-      POSTGRES_USER: zeroday
-      POSTGRES_PASSWORD: zeroday
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
       POSTGRES_DB: zeroday
     ports:
-      - "5432:5432"
+     - "5433:5432"
     volumes:
-      - zeroday_pg:/var/lib/postgresql/data
+      - zeroday_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d zeroday"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: zeroday-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/zeroday?schema=public
+
+      # если у тебя есть auth:
+      JWT_SECRET: dev_secret_change_me
+
+      # для фронта (локально) — если нужно CORS:
+      CORS_ORIGIN: http://localhost:5173
+    ports:
+      - "3000:3000"
 
 volumes:
-  zeroday_pg:
+  zeroday_db:

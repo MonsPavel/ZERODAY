@@ -31,17 +31,20 @@ const achievements = [
 ];
 
 async function main() {
-  await prisma.user.upsert({
-    where: { id: 1 },
+  const user = await prisma.user.upsert({
+    where: { email: 'local@example.com' },
     update: {},
-    create: { id: 1 },
+    create: {
+      email: 'local@example.com',
+      passwordHash: 'dev-local-password-hash',
+    },
   });
 
   await prisma.streak.upsert({
-    where: { userId: 1 },
+    where: { userId: user.id },
     update: {},
     create: {
-      userId: 1,
+      userId: user.id,
       currentInt: 0,
       bestInt: 0,
     },
