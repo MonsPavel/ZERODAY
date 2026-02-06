@@ -2,7 +2,6 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { GoalType, Prisma, TaskStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { getLocalDateString } from '../common/date';
-import { DEMO_USER_EMAIL, DEMO_USER_ID, DEMO_USER_PASSWORD_HASH } from '../common/constants';
 import { GoalsService } from '../goals/goals.service';
 
 type Mood = 'GOOD' | 'NEUTRAL' | 'BAD';
@@ -110,24 +109,12 @@ export class GameService {
     private readonly goalsService: GoalsService,
   ) {}
 
-  private async ensureUser(tx: Prisma.TransactionClient) {
-    await tx.user.upsert({
-      where: { id: DEMO_USER_ID },
-      update: {},
-      create: {
-        id: DEMO_USER_ID,
-        email: DEMO_USER_EMAIL,
-        passwordHash: DEMO_USER_PASSWORD_HASH,
-      },
-    });
-  }
-
-  private async ensureStreak(tx: Prisma.TransactionClient) {
+  private async ensureStreak(tx: Prisma.TransactionClient, userId: string) {
     await tx.streak.upsert({
-      where: { userId: DEMO_USER_ID },
+      where: { userId },
       update: {},
       create: {
-        userId: DEMO_USER_ID,
+        userId,
         currentInt: 0,
         bestInt: 0,
       },
@@ -146,11 +133,11 @@ export class GameService {
     );
   }
 
-  private async getToday(tx: Prisma.TransactionClient) {
+  private async getToday(tx: Prisma.TransactionClient, userId: string) {
     const date = getLocalDateString();
     const day = await tx.day.findFirst({
       where: {
-        userId: DEMO_USER_ID,
+        userId,
         date,
       },
       include: {
@@ -168,7 +155,7 @@ export class GameService {
 
     return tx.day.create({
       data: {
-        userId: DEMO_USER_ID,
+        userId,
         date,
       },
       include: {
@@ -181,14 +168,13 @@ export class GameService {
     });
   }
 
-  async getOrCreateToday() {
+  async getOrCreateToday(userId: string) {
     return this.prisma.$transaction(async (tx) => {
-      await this.ensureUser(tx);
-      return this.getToday(tx);
+      return this.getToday(tx, userId);
     });
   }
 
-  private async grantAchievements(tx: Prisma.TransactionClient, streakCurrent: number) {
+  private async grantAchievements(tx: Prisma.TransactionClient, userId: string, streakCurrent: number) {
     const achievements = await tx.achievement.findMany({
       where: {
         code: {
@@ -206,13 +192,13 @@ export class GameService {
       await tx.userAchievement.upsert({
         where: {
           userId_achievementId: {
-            userId: DEMO_USER_ID,
+            userId,
             achievementId: achievement.id,
           },
         },
         update: {},
         create: {
-          userId: DEMO_USER_ID,
+          userId,
           achievementId: achievement.id,
         },
       });
@@ -221,14 +207,14 @@ export class GameService {
     await grant('PERFECT_DAY');
 
     const finishedDayCount = await tx.day.count({
-      where: { userId: DEMO_USER_ID, completed: true },
+      where: { userId, completed: true },
     });
     if (finishedDayCount >= 1) {
       await grant('FIRST_FINISHED_DAY');
     }
 
     const doneTaskCount = await tx.task.count({
-      where: { userId: DEMO_USER_ID, status: TaskStatus.DONE },
+      where: { userId, status: TaskStatus.DONE },
     });
     if (doneTaskCount >= 1) {
       await grant('FIRST_TASK_DONE');
@@ -242,18 +228,18 @@ export class GameService {
     }
   }
 
-  private async buildGameState(tx: Prisma.TransactionClient) {
-    const day = await this.getToday(tx);
+  private async buildGameState(tx: Prisma.TransactionClient, userId: string) {
+    const day = await this.getToday(tx, userId);
     const streak = await tx.streak.findUnique({
-      where: { userId: DEMO_USER_ID },
+      where: { userId },
     });
     const goals = await tx.goal.findMany({
-      where: { userId: DEMO_USER_ID },
+      where: { userId },
       orderBy: { createdAt: 'asc' },
     });
 
     const achievements = await tx.userAchievement.findMany({
-      where: { userId: DEMO_USER_ID },
+      where: { userId },
       include: { achievement: true },
       orderBy: { unlockedAt: 'asc' },
     });
@@ -318,23 +304,21 @@ export class GameService {
     };
   }
 
-  async computeTodayState() {
+  async computeTodayState(userId: string) {
     return this.prisma.$transaction(async (tx) => {
-      await this.ensureUser(tx);
-      await this.ensureStreak(tx);
+      await this.ensureStreak(tx, userId);
       await this.ensureAchievementsCatalog(tx);
-      return this.buildGameState(tx);
+      return this.buildGameState(tx, userId);
     });
   }
 
-  async applyFinishDay() {
+  async applyFinishDay(userId: string) {
     return this.prisma.$transaction(async (tx) => {
-      await this.ensureUser(tx);
-      await this.ensureStreak(tx);
+      await this.ensureStreak(tx, userId);
       await this.ensureAchievementsCatalog(tx);
 
       const today = getLocalDateString();
-      let day = await this.getToday(tx);
+      let day = await this.getToday(tx, userId);
 
       if (day.tasks.length === 0) {
         throw new BadRequestException({
@@ -360,28 +344,28 @@ export class GameService {
         });
 
         const previous = await tx.day.findFirst({
-          where: { userId: DEMO_USER_ID, completed: true, date: { lt: today } },
+          where: { userId, completed: true, date: { lt: today } },
           orderBy: { date: 'desc' },
         });
 
-        const streak = await tx.streak.findUnique({ where: { userId: DEMO_USER_ID } });
+        const streak = await tx.streak.findUnique({ where: { userId } });
         const nextCurrent =
           previous && isYesterday(previous.date, today) ? (streak?.currentInt ?? 0) + 1 : 1;
         const nextBest = Math.max(streak?.bestInt ?? 0, nextCurrent);
 
         await tx.streak.update({
-          where: { userId: DEMO_USER_ID },
+          where: { userId },
           data: {
             currentInt: nextCurrent,
             bestInt: nextBest,
           },
         });
 
-        await this.goalsService.incrementGoals(GoalType.FINISH_DAYS, tx);
-        await this.grantAchievements(tx, nextCurrent);
+        await this.goalsService.incrementGoals(userId, GoalType.FINISH_DAYS, tx);
+        await this.grantAchievements(tx, userId, nextCurrent);
       }
 
-      const state = await this.buildGameState(tx);
+      const state = await this.buildGameState(tx, userId);
       return { ok: true, ...state };
     });
   }

@@ -2,31 +2,17 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { TaskStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { getLocalDateString } from '../common/date';
-import { DEMO_USER_EMAIL, DEMO_USER_ID, DEMO_USER_PASSWORD_HASH } from '../common/constants';
 import { getMood, pickMoodMessage } from '../common/mood';
 
 @Injectable()
 export class DayService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async ensureDemoUser() {
-    await this.prisma.user.upsert({
-      where: { id: DEMO_USER_ID },
-      update: {},
-      create: {
-        id: DEMO_USER_ID,
-        email: DEMO_USER_EMAIL,
-        passwordHash: DEMO_USER_PASSWORD_HASH,
-      },
-    });
-  }
-
-  async getOrCreateToday() {
-    await this.ensureDemoUser();
+  async getOrCreateToday(userId: string) {
     const date = getLocalDateString();
     const day = await this.prisma.day.findFirst({
       where: {
-        userId: DEMO_USER_ID,
+        userId,
         date,
       },
       include: {
@@ -44,7 +30,7 @@ export class DayService {
 
     return this.prisma.day.create({
       data: {
-        userId: DEMO_USER_ID,
+        userId,
         date,
       },
       include: {
@@ -57,12 +43,11 @@ export class DayService {
     });
   }
 
-  async finishToday() {
-    await this.ensureDemoUser();
+  async finishToday(userId: string) {
     const date = getLocalDateString();
     const day = await this.prisma.day.findFirst({
       where: {
-        userId: DEMO_USER_ID,
+        userId,
         date,
       },
       include: {
@@ -78,7 +63,7 @@ export class DayService {
       day ??
       (await this.prisma.day.create({
         data: {
-          userId: DEMO_USER_ID,
+          userId,
           date,
         },
         include: {
@@ -131,8 +116,8 @@ export class DayService {
     };
   }
 
-  async getMood() {
-    const day = await this.getOrCreateToday();
+  async getMood(userId: string) {
+    const day = await this.getOrCreateToday(userId);
     const mood = getMood({ completed: day.completed, tasks: day.tasks });
     return {
       mood,

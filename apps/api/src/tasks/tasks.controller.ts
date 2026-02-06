@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Param, Patch, Post, ParseIntPipe, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Param, Patch, Post, ParseIntPipe, Req, UseGuards } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -22,21 +22,21 @@ export class TasksController {
   @Post()
   @ApiCreatedResponse({ type: TaskDto })
   @ApiBadRequestResponse({ schema: { example: { code: 'BAD_REQUEST', message: 'Validation failed' } } })
-  createTask(@Body() body: CreateTaskDto) {
-    return this.tasksService.createTask(body);
+  createTask(@Body() body: CreateTaskDto, @Req() req: { user: { id: string } }) {
+    return this.tasksService.createTask(body, req.user.id);
   }
 
   @Patch(':id/toggle')
   @ApiOkResponse({ type: TaskDto })
   @ApiNotFoundResponse({ schema: { example: { code: 'NOT_FOUND', message: 'Task not found.' } } })
-  toggleTask(@Param('id', ParseIntPipe) id: number) {
-    return this.tasksService.toggleTask(id);
+  toggleTask(@Param('id', ParseIntPipe) id: number, @Req() req: { user: { id: string } }) {
+    return this.tasksService.toggleTask(id, req.user.id);
   }
 
   @Delete(':id')
   @ApiOkResponse({ schema: { example: { ok: true } } })
   @ApiNotFoundResponse({ schema: { example: { code: 'NOT_FOUND', message: 'Task not found.' } } })
-  deleteTask(@Param('id', ParseIntPipe) id: number) {
-    return this.tasksService.deleteTask(id);
+  deleteTask(@Param('id', ParseIntPipe) id: number, @Req() req: { user: { id: string } }) {
+    return this.tasksService.deleteTask(id, req.user.id);
   }
 }

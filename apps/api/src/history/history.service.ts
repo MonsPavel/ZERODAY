@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { DEMO_USER_EMAIL, DEMO_USER_ID, DEMO_USER_PASSWORD_HASH } from '../common/constants';
 import { getLocalDateString } from '../common/date';
 
 const toDateString = (date: Date) => {
@@ -27,34 +26,21 @@ const buildRange = (days: number) => {
 export class HistoryService {
   constructor(private readonly prisma: PrismaService) {}
 
-  private async ensureUser() {
-    await this.prisma.user.upsert({
-      where: { id: DEMO_USER_ID },
-      update: {},
-      create: {
-        id: DEMO_USER_ID,
-        email: DEMO_USER_EMAIL,
-        passwordHash: DEMO_USER_PASSWORD_HASH,
-      },
-    });
-  }
-
-  private async ensureStreak() {
+  private async ensureStreak(userId: string) {
     await this.prisma.streak.upsert({
-      where: { userId: DEMO_USER_ID },
+      where: { userId },
       update: {},
-      create: { userId: DEMO_USER_ID, currentInt: 0, bestInt: 0 },
+      create: { userId, currentInt: 0, bestInt: 0 },
     });
   }
 
-  async getHistory(days: number) {
-    await this.ensureUser();
-    await this.ensureStreak();
+  async getHistory(userId: string, days: number) {
+    await this.ensureStreak(userId);
 
     const range = buildRange(days);
     const dayRecords = await this.prisma.day.findMany({
       where: {
-        userId: DEMO_USER_ID,
+        userId,
         date: { in: range },
       },
       include: {
@@ -64,7 +50,7 @@ export class HistoryService {
 
     const dayMap = new Map(dayRecords.map((day) => [day.date, day]));
     const streak = await this.prisma.streak.findUnique({
-      where: { userId: DEMO_USER_ID },
+      where: { userId },
     });
 
     const daysPayload = range.map((date) => {
@@ -95,11 +81,10 @@ export class HistoryService {
     };
   }
 
-  async getDayDetails(date: string) {
-    await this.ensureUser();
+  async getDayDetails(userId: string, date: string) {
     const day = await this.prisma.day.findFirst({
       where: {
-        userId: DEMO_USER_ID,
+        userId,
         date,
       },
       include: {

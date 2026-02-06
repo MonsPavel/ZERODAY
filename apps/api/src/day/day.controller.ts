@@ -1,4 +1,4 @@
-import { Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiBadRequestResponse, ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { GameService } from '../game/game.service';
 import { DayTodayResponseDto, MoodResponseDto } from './dto/day.dto';
@@ -15,8 +15,8 @@ export class DayController {
 
   @Get('today')
   @ApiOkResponse({ type: DayTodayResponseDto })
-  async getToday() {
-    const day = await this.gameService.getOrCreateToday();
+  async getToday(@Req() req: { user: { id: string } }) {
+    const day = await this.gameService.getOrCreateToday(req.user.id);
     return {
       date: day.date,
       completed: day.completed,
@@ -40,14 +40,14 @@ export class DayController {
       },
     },
   })
-  async finishDay() {
-    return this.gameService.applyFinishDay();
+  async finishDay(@Req() req: { user: { id: string } }) {
+    return this.gameService.applyFinishDay(req.user.id);
   }
 
   @Get('mood')
   @ApiOkResponse({ type: MoodResponseDto })
-  async getMood() {
-    const state = await this.gameService.computeTodayState();
+  async getMood(@Req() req: { user: { id: string } }) {
+    const state = await this.gameService.computeTodayState(req.user.id);
     return {
       mood: state.mood,
       message: state.message,

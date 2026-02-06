@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { GameService } from './game.service';
 import { GameStateDto } from './dto/game.dto';
@@ -13,7 +13,7 @@ export class GameController {
 
   @Get('state')
   @ApiOkResponse({ type: GameStateDto })
-  async getState() {
-    return this.gameService.computeTodayState();
+  async getState(@Req() req: { user: { id: string } }) {
+    return this.gameService.computeTodayState(req.user.id);
   }
 }
