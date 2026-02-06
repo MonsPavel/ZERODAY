@@ -3,7 +3,7 @@ import { GoalType, TaskStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { getLocalDateString } from '../common/date';
-import { DEMO_USER_ID } from '../common/constants';
+import { DEMO_USER_EMAIL, DEMO_USER_ID, DEMO_USER_PASSWORD_HASH } from '../common/constants';
 import { GoalsService } from '../goals/goals.service';
 
 @Injectable()
@@ -17,7 +17,11 @@ export class TasksService {
     await this.prisma.user.upsert({
       where: { id: DEMO_USER_ID },
       update: {},
-      create: { id: DEMO_USER_ID },
+      create: {
+        id: DEMO_USER_ID,
+        email: DEMO_USER_EMAIL,
+        passwordHash: DEMO_USER_PASSWORD_HASH,
+      },
     });
   }
 

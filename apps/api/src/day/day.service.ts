@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { TaskStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { getLocalDateString } from '../common/date';
-import { DEMO_USER_ID } from '../common/constants';
+import { DEMO_USER_EMAIL, DEMO_USER_ID, DEMO_USER_PASSWORD_HASH } from '../common/constants';
 import { getMood, pickMoodMessage } from '../common/mood';
 
 @Injectable()
@@ -13,7 +13,11 @@ export class DayService {
     await this.prisma.user.upsert({
       where: { id: DEMO_USER_ID },
       update: {},
-      create: { id: DEMO_USER_ID },
+      create: {
+        id: DEMO_USER_ID,
+        email: DEMO_USER_EMAIL,
+        passwordHash: DEMO_USER_PASSWORD_HASH,
+      },
     });
   }
 

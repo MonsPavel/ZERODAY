@@ -1,11 +1,14 @@
-import { Controller, Get, Post } from '@nestjs/common';
-import { ApiBadRequestResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { ApiBadRequestResponse, ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { GameService } from '../game/game.service';
 import { DayTodayResponseDto, MoodResponseDto } from './dto/day.dto';
 import { ErrorResponseDto } from './dto/error.dto';
 import { FinishDayResponseDto } from '../game/dto/game.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @ApiTags('day')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('day')
 export class DayController {
   constructor(private readonly gameService: GameService) {}

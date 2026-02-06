@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { DEMO_USER_ID } from '../common/constants';
+import { DEMO_USER_EMAIL, DEMO_USER_ID, DEMO_USER_PASSWORD_HASH } from '../common/constants';
 import { getLocalDateString } from '../common/date';
 
 const toDateString = (date: Date) => {
@@ -31,7 +31,11 @@ export class HistoryService {
     await this.prisma.user.upsert({
       where: { id: DEMO_USER_ID },
       update: {},
-      create: { id: DEMO_USER_ID },
+      create: {
+        id: DEMO_USER_ID,
+        email: DEMO_USER_EMAIL,
+        passwordHash: DEMO_USER_PASSWORD_HASH,
+      },
     });
   }
 

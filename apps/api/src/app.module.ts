@@ -10,9 +10,10 @@ import { HistoryController } from './history/history.controller';
 import { HistoryService } from './history/history.service';
 import { GoalsController } from './goals/goals.controller';
 import { GoalsService } from './goals/goals.service';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, AuthModule],
   controllers: [
     AppController,
     DayController,
