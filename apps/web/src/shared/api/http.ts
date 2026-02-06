@@ -1,5 +1,6 @@
 import type {
   ApiError,
+  AuthToken,
   DayToday,
   FinishDayOk,
   GameState,
@@ -9,15 +10,18 @@ import type {
   HistoryResponse,
   Task,
 } from './types';
+import { AUTH_TOKEN_KEY } from '@/stores/auth';
 
 const baseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 
 const buildUrl = (path: string) => `${baseUrl}${path}`;
 
 const request = async <T>(path: string, options?: RequestInit): Promise<T> => {
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
   const response = await fetch(buildUrl(path), {
     headers: {
       'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(options?.headers ?? {}),
     },
     ...options,
@@ -42,6 +46,18 @@ const request = async <T>(path: string, options?: RequestInit): Promise<T> => {
 };
 
 export const getToday = () => request<DayToday>('/day/today');
+
+export const login = (payload: { email: string; password: string }) =>
+  request<AuthToken>('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+
+export const register = (payload: { email: string; password: string }) =>
+  request<AuthToken>('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
 
 export const createTask = (payload: { title: string; note?: string }) =>
   request<Task>('/tasks', {

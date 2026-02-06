@@ -1,10 +1,21 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useQueryClient } from '@tanstack/vue-query';
 import { UiButton } from '@zeroday/ui';
 import { useThemeStore } from './stores/theme';
+import { useAuthStore } from './stores/auth';
+import { router } from './router';
 
 const themeStore = useThemeStore();
+const authStore = useAuthStore();
+const queryClient = useQueryClient();
 const toggleLabel = computed(() => (themeStore.theme === 'mono' ? 'Acid' : 'Mono'));
+
+const handleLogout = async () => {
+  authStore.clearToken();
+  await queryClient.clear();
+  router.replace('login');
+};
 </script>
 
 <template>
@@ -22,6 +33,7 @@ const toggleLabel = computed(() => (themeStore.theme === 'mono' ? 'Acid' : 'Mono
         <UiButton variant="ghost" size="sm" @click="themeStore.toggleTheme()">
           Тема: {{ toggleLabel }}
         </UiButton>
+        <UiButton variant="ghost" size="sm" @click="handleLogout">Logout</UiButton>
       </nav>
     </header>
     <main class="content">
