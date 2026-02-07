@@ -6,7 +6,7 @@ import './styles/theme.css';
 import App from './App.vue';
 import { router } from './router';
 import { useThemeStore } from './stores/theme';
-import { useAuthStore, AUTH_TOKEN_KEY } from './stores/auth';
+import { decodeJwtPayload, useAuthStore, AUTH_TOKEN_KEY } from './stores/auth';
 import { pinia } from '@/stores/pinia';
 import { queryClient } from '@/shared/queryClient';
 
@@ -20,7 +20,18 @@ const themeStore = useThemeStore(pinia);
 themeStore.init();
 
 const authStore = useAuthStore(pinia);
-window.addEventListener('storage', async (event) => {
+const currentToken = authStore.token;
+if (currentToken) {
+  const payload = decodeJwtPayload(currentToken);
+  const exp = payload?.exp;
+  if (typeof exp === 'number' && exp * 1000 <= Date.now()) {
+    authStore.clearToken();
+    void queryClient.clear();
+    router.replace('login');
+  }
+}
+
+window.addEventListener('storage', (event) => {
   if (event.key !== AUTH_TOKEN_KEY) {
     return;
   }
@@ -30,7 +41,7 @@ window.addEventListener('storage', async (event) => {
     return;
   }
   authStore.clearToken();
-  await queryClient.clear();
+  void queryClient.clear();
   router.replace('login');
 });
 

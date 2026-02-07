@@ -25,3 +25,19 @@ export const useAuthStore = defineStore('auth', () => {
     clearToken,
   };
 });
+
+export const decodeJwtPayload = (token: string): { exp?: number } | null => {
+  const parts = token.split('.');
+  if (parts.length !== 3) {
+    return null;
+  }
+  const payload = parts[1];
+  const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+  try {
+    const json = atob(padded);
+    return JSON.parse(json) as { exp?: number };
+  } catch {
+    return null;
+  }
+};
