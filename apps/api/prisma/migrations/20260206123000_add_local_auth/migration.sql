@@ -17,27 +17,35 @@ ALTER TABLE "UserAchievement" ALTER COLUMN "userId" TYPE TEXT USING "userId"::TE
 ALTER TABLE "Streak" ALTER COLUMN "userId" TYPE TEXT USING "userId"::TEXT;
 ALTER TABLE "Goal" ALTER COLUMN "userId" TYPE TEXT USING "userId"::TEXT;
 
--- Keep/insert single default user
-DELETE FROM "User"
-WHERE "id" NOT IN (
-  SELECT "id" FROM "User" ORDER BY "createdAt" ASC NULLS LAST LIMIT 1
-);
+-- Legacy user (only if missing)
+WITH legacy_user AS (
+  INSERT INTO "User" ("email", "passwordHash", "createdAt")
+  VALUES ('legacy@zeroday.local', 'legacy-password-hash', NOW())
+  ON CONFLICT ("email") DO NOTHING
+  RETURNING "id"
+),
+legacy_id AS (
+  SELECT "id" FROM legacy_user
+  UNION ALL
+  SELECT "id" FROM "User" WHERE "email" = 'legacy@zeroday.local' LIMIT 1
+)
+-- Backfill ownership only where userId is NULL
+UPDATE "Task"
+SET "userId" = (SELECT "id" FROM legacy_id LIMIT 1)
+WHERE "userId" IS NULL;
 
-INSERT INTO "User" ("id", "email", "passwordHash", "createdAt")
-SELECT 'clocaluser00000000000000', 'local@example.com', 'dev-local-password-hash', NOW()
-WHERE NOT EXISTS (SELECT 1 FROM "User");
+UPDATE "UserAchievement"
+SET "userId" = (SELECT "id" FROM legacy_id LIMIT 1)
+WHERE "userId" IS NULL;
 
+UPDATE "Streak"
+SET "userId" = (SELECT "id" FROM legacy_id LIMIT 1)
+WHERE "userId" IS NULL;
+
+-- Ensure auth fields for existing users (no overrides)
 UPDATE "User"
-SET "id" = 'clocaluser00000000000000',
-    "email" = COALESCE("email", 'local@example.com'),
-    "passwordHash" = COALESCE("passwordHash", 'dev-local-password-hash');
-
--- Assign all existing rows to default user
-UPDATE "Day" SET "userId" = 'clocaluser00000000000000';
-UPDATE "Task" SET "userId" = 'clocaluser00000000000000';
-UPDATE "UserAchievement" SET "userId" = 'clocaluser00000000000000';
-UPDATE "Streak" SET "userId" = 'clocaluser00000000000000';
-UPDATE "Goal" SET "userId" = 'clocaluser00000000000000';
+SET "email" = COALESCE("email", CONCAT('legacy+', "id", '@zeroday.local')),
+    "passwordHash" = COALESCE("passwordHash", 'legacy-password-hash');
 
 -- Enforce auth fields
 ALTER TABLE "User" ALTER COLUMN "email" SET NOT NULL;

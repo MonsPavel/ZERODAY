@@ -27,6 +27,10 @@ pnpm --filter @zeroday/api db:migrate
 pnpm --filter @zeroday/api db:seed
 ```
 
+Примечание по legacy данным:
+- Старые записи без владельца получают `userId` legacy-пользователя (`legacy@zeroday.local`).
+- Будущий multi-user не делает автоматическую переразметку старых данных.
+
 ## Запуск
 
 ```bash
