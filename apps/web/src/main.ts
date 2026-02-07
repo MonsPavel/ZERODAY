@@ -7,8 +7,8 @@ import App from './App.vue';
 import { router } from './router';
 import { useThemeStore } from './stores/theme';
 import { decodeJwtPayload, useAuthStore, AUTH_TOKEN_KEY } from './stores/auth';
-import { pinia } from './stores/pinia';
-import { queryClient } from './shared/queryClient';
+import { pinia } from '@/stores/pinia';
+import { queryClient } from '@/shared/queryClient';
 
 const app = createApp(App);
 
@@ -26,7 +26,7 @@ if (currentToken) {
   const exp = payload?.exp;
   if (typeof exp === 'number' && exp * 1000 <= Date.now()) {
     authStore.clearToken();
-    queryClient.clear();
+    void queryClient.clear();
     router.replace('login');
   }
 }
@@ -41,7 +41,7 @@ window.addEventListener('storage', (event) => {
     return;
   }
   authStore.clearToken();
-  queryClient.clear();
+  void queryClient.clear();
   router.replace('login');
 });
 
