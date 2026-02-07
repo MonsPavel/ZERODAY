@@ -11,10 +11,20 @@ import type {
   Task,
 } from './types';
 import { AUTH_TOKEN_KEY } from '@/stores/auth';
+import { useAuthStore } from '@/stores/auth';
+import { pinia } from '@/stores/pinia';
+import { queryClient } from '@/shared/queryClient';
 
 const baseUrl = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
 
 const buildUrl = (path: string) => `${baseUrl}${path}`;
+
+const handleUnauthorized = async () => {
+  const authStore = useAuthStore(pinia);
+  authStore.clearToken();
+  await queryClient.clear();
+  window.location.assign('/login');
+};
 
 const request = async <T>(path: string, options?: RequestInit): Promise<T> => {
   const token = localStorage.getItem(AUTH_TOKEN_KEY);
@@ -26,6 +36,11 @@ const request = async <T>(path: string, options?: RequestInit): Promise<T> => {
     },
     ...options,
   });
+
+  if (response.status === 401) {
+    await handleUnauthorized();
+    throw { code: 'UNAUTHORIZED', message: 'Unauthorized' } as ApiError;
+  }
 
   if (response.ok) {
     return (await response.json()) as T;
