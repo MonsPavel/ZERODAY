@@ -2,6 +2,9 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+const LEGACY_EMAIL = 'legacy@zeroday.local';
+const LEGACY_PASSWORD_HASH = 'legacy-password-hash';
+
 const achievements = [
   {
     code: 'FIRST_TASK_DONE',
@@ -31,12 +34,19 @@ const achievements = [
 ];
 
 async function main() {
+  const isDev = process.env.NODE_ENV !== 'production';
+  const allowSeed = isDev || process.env.SEED_ALLOW === '1';
+  if (!allowSeed) {
+    console.log('Seed skipped: NODE_ENV is production. Set SEED_ALLOW=1 to override.');
+    return;
+  }
+
   const user = await prisma.user.upsert({
-    where: { email: 'local@example.com' },
+    where: { email: LEGACY_EMAIL },
     update: {},
     create: {
-      email: 'local@example.com',
-      passwordHash: 'dev-local-password-hash',
+      email: LEGACY_EMAIL,
+      passwordHash: LEGACY_PASSWORD_HASH,
     },
   });
 
