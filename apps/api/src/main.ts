@@ -2,8 +2,10 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { validateJwtEnv } from './auth/jwt.config';
 
 async function bootstrap() {
+  validateJwtEnv();
   const app = await NestFactory.create(AppModule);
   app.enableCors({
     origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
