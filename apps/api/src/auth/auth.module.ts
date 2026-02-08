@@ -13,7 +13,7 @@ import { getJwtExpiresIn, getJwtSecret } from './jwt.config';
     PassportModule,
     JwtModule.register({
       secret: getJwtSecret(),
-      signOptions: { expiresIn: getJwtExpiresIn() },
+      signOptions: { expiresIn: getJwtExpiresIn() as any },
     }),
   ],
   controllers: [AuthController],

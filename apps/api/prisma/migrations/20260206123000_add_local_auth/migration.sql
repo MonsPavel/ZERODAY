@@ -17,29 +17,26 @@ ALTER TABLE "UserAchievement" ALTER COLUMN "userId" TYPE TEXT USING "userId"::TE
 ALTER TABLE "Streak" ALTER COLUMN "userId" TYPE TEXT USING "userId"::TEXT;
 ALTER TABLE "Goal" ALTER COLUMN "userId" TYPE TEXT USING "userId"::TEXT;
 
--- Legacy user (only if missing)
-WITH legacy_user AS (
-  INSERT INTO "User" ("email", "passwordHash", "createdAt")
-  VALUES ('legacy@zeroday.local', 'legacy-password-hash', NOW())
-  ON CONFLICT ("email") DO NOTHING
-  RETURNING "id"
-),
-legacy_id AS (
-  SELECT "id" FROM legacy_user
-  UNION ALL
-  SELECT "id" FROM "User" WHERE "email" = 'legacy@zeroday.local' LIMIT 1
-)
--- Backfill ownership only where userId is NULL
+-- Legacy user (only if missing) + backfill ownership only where userId is NULL
+CREATE TEMP TABLE "_legacy_user_id" ("id" TEXT) ON COMMIT DROP;
+
+INSERT INTO "User" ("id", "email", "passwordHash", "createdAt")
+SELECT 'legacy_user', 'legacy@zeroday.local', 'legacy-password-hash', NOW()
+WHERE NOT EXISTS (SELECT 1 FROM "User" WHERE "email" = 'legacy@zeroday.local');
+
+INSERT INTO "_legacy_user_id" ("id")
+SELECT "id" FROM "User" WHERE "email" = 'legacy@zeroday.local' LIMIT 1;
+
 UPDATE "Task"
-SET "userId" = (SELECT "id" FROM legacy_id LIMIT 1)
+SET "userId" = (SELECT "id" FROM "_legacy_user_id" LIMIT 1)
 WHERE "userId" IS NULL;
 
 UPDATE "UserAchievement"
-SET "userId" = (SELECT "id" FROM legacy_id LIMIT 1)
+SET "userId" = (SELECT "id" FROM "_legacy_user_id" LIMIT 1)
 WHERE "userId" IS NULL;
 
 UPDATE "Streak"
-SET "userId" = (SELECT "id" FROM legacy_id LIMIT 1)
+SET "userId" = (SELECT "id" FROM "_legacy_user_id" LIMIT 1)
 WHERE "userId" IS NULL;
 
 -- Ensure auth fields for existing users (no overrides)
